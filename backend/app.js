@@ -7,7 +7,9 @@ const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
-const authMiddleware = require('./middlewares/authMiddleware');
+const orderRoutes = require("./routes/orderRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+const shipmentRoutes = require("./routes/shipmentRoutes");
 
 const app = express();
 
@@ -20,7 +22,9 @@ app.use("/users", userRoutes);
 app.use("/products", productRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/carts", cartRoutes);
-app.use(authMiddleware);
+app.use("/orders", orderRoutes);
+app.use("/payment", paymentRoutes);
+app.use("/shipment", shipmentRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
