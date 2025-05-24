@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const expiresIn = process.env.JWT_EXPIRESIN;
+const JWT_EXPIRESIN = process.env.JWT_EXPIRESIN;
 
 exports.register = async (req, res) => {
   const { email, password, role, name } = req.body;
@@ -15,11 +15,16 @@ exports.register = async (req, res) => {
     const existingUser = await userModel.findByEmail(email);
     if (existingUser) return res.status(400).json({ error: 'Email already in use' }); 
     
-    const userId = await userModel.createUser({ name, email, password, role });
+    const userId = await userModel.createUser({ name, email, password, role: 'user' });
 
-    const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn });
+    const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRESIN });
+
     res.cookie('token', token, {
-      httpOnly: true }).json({ message: 'Registration successful' });
+      httpOnly: true,
+      maxAge: 7* 24 * 60 * 60 * 1000, // 1 day
+    });
+      
+    res.status(201).json({ message: 'Registration successful' });
   } catch (error) {
     console.error("Error registering user:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -39,7 +44,7 @@ exports.login = async (req, res) => {
     const validPassword = await userModel.verifyPassword(password, user.password);
     if (!validPassword) return res.status(401).json({ error: 'Invalid email or password'});
 
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn });
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRESIN });
     res.cookie('token', token, { httpOnly: true }).json({ message: 'Login successful' });
   } catch (error) {
     console.error("Error login user:", error.message);
@@ -77,5 +82,18 @@ exports.changePassword = async (req, res) => {
     }
   } catch (error) {
     return res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getMe = async (req, res) => {
+  try {
+    const user = await userModel.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const { password, ...userData } = user; 
+    res.json(userData);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 };

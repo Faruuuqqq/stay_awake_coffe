@@ -12,7 +12,7 @@ exports.findByEmail = async (email) => {
 
 exports.findById = async (id) => {
   try {
-    const [user] = await db.execute('SELECT * FROM users WHERE id =? ', [id]);
+    const [user] = await db.execute('SELECT * FROM users WHERE user_id =? ', [id]);
     return user[0] || null;
   } catch (error) {
     throw new Error('Database error: ' + error.message);
@@ -36,7 +36,7 @@ exports.updatePassword = async (id, newPassword) => {
   try {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     const [result] = await db.execute(
-      'UPDATE users SET password = ? WHERE id = ?',
+      'UPDATE users SET password = ? WHERE user_id = ?',
       [hashedPassword, id]
     );
     return result.affectedRows > 0;
