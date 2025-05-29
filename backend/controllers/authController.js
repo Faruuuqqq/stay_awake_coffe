@@ -5,50 +5,68 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRESIN = process.env.JWT_EXPIRESIN;
 
 exports.register = async (req, res) => {
-  const { email, password, role, name } = req.body;
-  
-  if (!email ||  !password|| !name) {
-    return res.status(400).json({ error: "Email, password, and name required "});
+  const { email, password, confirmPassword, name, terms } = req.body;
+
+  if (!email || !password || !confirmPassword || !name) {
+    return res.render('login-register', { error: "All fields are required", formData: req.body });
+  }
+
+  if (password !== confirmPassword) {
+    return res.render('login-register', { error: "Password and confirm password do not match", formData: req.body });
+  }
+
+  if (!terms) {
+    return res.render('login-register', { error: "You must agree to terms and privacy policy", formData: req.body });
   }
 
   try {
     const existingUser = await userModel.findByEmail(email);
-    if (existingUser) return res.status(400).json({ error: 'Email already in use' }); 
-    
+    if (existingUser) {
+      return res.render('login-register', { error: 'Email already in use', formData: req.body });
+    }
+
     const userId = await userModel.createUser({ name, email, password, role: 'user' });
 
     const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRESIN });
-
     res.cookie('token', token, {
       httpOnly: true,
-      maxAge: 7* 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-      
-    res.status(201).json({ message: 'Registration successful' });
+
+    return res.redirect('/');
   } catch (error) {
-    console.error("Error registering user:", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error(error);
+    return res.render('login-register', { error: "Internal Server Error", formData: req.body });
   }
-}
+};
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).json({ error: "Email and password are wrong" });
+    // return res.status(400).json({ error: "Email and password are wrong" });
+    return res.render('login-register', { error: "Email and password are required", formData: req.body });
   }
 
   try {
     const user = await userModel.findByEmail(email);
-    if (!user) return res.status(401).json({ error: 'Invalid email or password' });
-
+    if (!user) {
+      // return res.status(401).json({ error: 'Invalid email or password' });
+      return res.render('login-register', { error: 'Invalid email or password', formData: req.body });
+    }
     const validPassword = await userModel.verifyPassword(password, user.password);
-    if (!validPassword) return res.status(401).json({ error: 'Invalid email or password'});
+    if (!validPassword) {
+      // return res.status(401).json({ error: 'Invalid email or password'});
+      return res.render('login-register', { error: 'Invalid email or password', formData: req.body });
+    }
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRESIN });
     res.cookie('token', token, { httpOnly: true }).json({ message: 'Login successful' });
+    
+    return res.redirect('/');
   } catch (error) {
     console.error("Error login user:", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    // res.status(500).json({ error: "Internal Server Error" });
+    return res.render('login-register', { error: "Internal Server Error", formData: req.body });
   }
 }
 

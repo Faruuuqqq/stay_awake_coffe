@@ -4,7 +4,8 @@ const productModel = require('../models/productModel');
 exports.getAllProducts = async (req, res) => {
   try {
     const products = await productModel.getAllProducts();
-    res.json(products);
+    // res.json(products);
+    res.render('index', { products });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
