@@ -33,6 +33,7 @@ exports.createUser = async ({ name, email, password, role }) => {
 }
 
 exports.updatePassword = async (id, newPassword) => {
+  console.log('updatePassword called with id:', id, 'newPassword:', newPassword ? '[HIDDEN]' : newPassword);
   try {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     const [result] = await db.execute(
@@ -43,7 +44,8 @@ exports.updatePassword = async (id, newPassword) => {
   } catch (error) {
     throw new Error('Database error: ' + error.message);
   }
-}
+};
+
 
 exports.verifyPassword = async (plainPassword, hashedPassword) => {
   try {
@@ -52,3 +54,19 @@ exports.verifyPassword = async (plainPassword, hashedPassword) => {
     throw new Error('Password verification failed:' + error.message);
   }
 }
+
+exports.saveResetToken = async (userId, token, expiresAt) => {
+  const sql = `INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)`;
+  await db.execute(sql, [userId, token, expiresAt]);
+};
+
+exports.validateResetToken = async (token) => {
+  const sql = `SELECT * FROM password_resets WHERE token = ? AND expires_at > NOW()`;
+  const [rows] = await db.execute(sql, [token]);
+  return rows.length ? rows[0] : null;
+};
+
+exports.deleteResetToken = async (token) => {
+  const sql = `DELETE FROM password_resets WHERE token = ?`;
+  await db.execute(sql, [token]);
+};
