@@ -29,7 +29,8 @@ exports.getPaymentById = async (req, res) => {
   try {
     const payment = await paymentModel.getPaymentById(paymentId);
     if (!payment) return res.status(404).json({ error: 'payment not found' });
-    res.json(payment);  
+    // res.json(payment);  
+    res.render("checkout", { payment, title: 'Stay Awake Coffee - Payment Details' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

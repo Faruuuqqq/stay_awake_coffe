@@ -2,7 +2,9 @@ const cartModel = require('../models/cartModel');
 
 exports.getCart = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId || 1;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
     const cart = await cartModel.getCartByUserId(userId);
     if (!cart) {
       return res.status(404).json({ error: 'Cart not found' });
@@ -13,7 +15,8 @@ exports.getCart = async (req, res) => {
       return res.status(404).json({ error: 'No items in cart' });
     }
     
-    res.json({ cartId: cart.cart_id, items });
+    // res.json({ cartId: cart.cart_id, items });
+    res.render("cart",{ cartId: cart.cart_id, items, title: 'Stay Awake Coffee - Cart' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

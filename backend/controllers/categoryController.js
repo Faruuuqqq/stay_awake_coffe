@@ -3,7 +3,8 @@ const categoryModel = require('../models/categoryModel');
 exports.getAllCategories = async (req, res) => {
   try {
     const categories = await categoryModel.getAllCategories();
-    res.json(categories);
+    // res.json(categories);
+    res.render("category", { categories, title: 'Stay Awake Coffee - Categories' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

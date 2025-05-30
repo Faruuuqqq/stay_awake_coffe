@@ -9,7 +9,7 @@ exports.getCartByUserId = async (userId) => {
       const cartId = result.insertId;
       return { cart_id : cartId, user_id: userId };
     }
-    return rows[0];
+    return carts[0] || null;
   } catch(error) {  
     throw new Error('Database error: ' + error.message);
   }
