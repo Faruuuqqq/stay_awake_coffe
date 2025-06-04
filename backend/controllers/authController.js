@@ -1,5 +1,9 @@
 const jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
+const paymentModel = require('../models/paymentModel');
+const orderModel = require('../models/orderModel');
+const addressModel = require('../models/addressModel');
+
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
@@ -38,7 +42,8 @@ exports.register = async (req, res) => {
     return res.render('login-register', {
     success: ' Registration successful! You can now login.',
     error: "Email or password is not valid",
-    formData: req.body
+    formData: req.body,
+    redirectToHomepage: false,
     });
   } catch (error) {
     console.error(error);
@@ -49,28 +54,32 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    // return res.status(400).json({ error: "Email and password are wrong" });
     return res.render('login-register', { error: "Email and password are required", formData: req.body });
   }
 
   try {
     const user = await userModel.findByEmail(email);
     if (!user) {
-      // return res.status(401).json({ error: 'Invalid email or password' });
       return res.render('login-register', { error: 'Invalid email or password', formData: req.body });
     }
     const validPassword = await userModel.verifyPassword(password, user.password);
     if (!validPassword) {
-      // return res.status(401).json({ error: 'Invalid email or password'});
       return res.render('login-register', { error: 'Invalid email or password', formData: req.body });
     }
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRESIN });
-    res.cookie('token', token, { httpOnly: true, success: 'Login successful!', error: "Email or password is not valid" }).redirect('/');
+
+    res.cookie('token', token, { httpOnly: true });
+    res.render('login-register', {
+      success: 'Login successful! Redirecting to homepage...',
+      error: null,
+      formData: {},
+      redirectToHomepage: true,
+    });
+
   } catch (error) {
     console.error("Error login user:", error.message);
-    // res.status(500).json({ error: "Internal Server Error" });
-    return res.render('login-register', { error: "Internal Server Error", formData: req.body });
+    return res.render('login-register', { success: null, error: "Internal Server Error", formData: req.body });
   }
 }
 
@@ -261,5 +270,39 @@ exports.changePassword = async (req, res) => {
       success: null,
       formData: req.body
     });
+  }
+};
+
+exports.getAccountPage = async (req, res) => {
+  const userId = req.userId;
+
+  try {
+    // Ambil data user profile
+    const user = await userModel.findById(userId);
+    if (!user) return res.redirect('/users/login-register');
+
+    // Ambil orders user
+    const orders = await orderModel.getOrdersByUserId(userId);
+
+    // Ambil wishlist user
+    // const wishlist = await wishlistModel.getWishlistByUserId(userId);
+
+    // Ambil alamat user
+    const addresses = await addressModel.getAddressesByUserId(userId);
+
+    // Ambil payment methods user
+    const payments = await paymentModel.getPaymentsByUserId(userId);
+
+    // Render account page dengan data lengkap
+    res.render('account', {
+      user,
+      orders,
+      addresses,
+      payments,
+      // bisa tambah variabel lain untuk kontrol tampilan
+    });
+  } catch (error) {
+    console.error('Error loading account page:', error);
+    res.status(500).send('Internal Server Error');
   }
 };

@@ -5,36 +5,59 @@ exports.createOrder = async (req, res) => {
   const userId = req.userId;
   const { address_id } = req.body;
 
-  if(!address_id) return res.status(400).json({ error: 'Address is required' });
+  if (!address_id) {
+    return res.render('checkout', {
+      error: 'Address is required',
+      success: null,
+      formData: req.body,
+    });
+  }
 
   try {
-    // ambil semua cart
     const cart = await cartModel.getCartByUserId(userId);
-    if (!cart) return res.status(400).json({ error: 'Cart is empty' });
+    if (!cart) {
+      return res.render('checkout', {
+        error: 'Cart is empty',
+        success: null,
+        formData: req.body,
+      });
+    }
 
-    // ambil semua item di cart
-    const items = await cartModel.getCartItems(cart.cart_Id);
-    if (!items.length === 0) return res.status(400).json({ error: 'cart items is empty'})
+    const items = await cartModel.getCartItems(cart.cart_id);
+    if (items.length === 0) {
+      return res.render('checkout', {
+        error: 'Cart items is empty',
+        success: null,
+        formData: req.body,
+      });
+    }
 
-    // hitung total price
     const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    // buat order
     const orderId = await orderModel.createOrder(userId, address_id, totalPrice);
 
-    const orderItems = items.map(item => ({
+    const orderItems = items.map((item) => ({
       product_id: item.product_id,
       quantity: item.quantity,
-      total_price: item.price * item.quantity
+      total_price: item.price * item.quantity,
     }));
+
     await orderModel.createOrderItems(orderId, orderItems);
 
     await cartModel.clearCart(cart.cart_id);
-    res.status(201).json({ message: 'order created successfully'});
+
+    // Redirect ke halaman pembayaran, kirim orderId sebagai query param
+    res.redirect(`/payments?orderId=${orderId}`);
   } catch (error) {
-    throw new Error({ error: error.message });
+    res.render('checkout', {
+      error: error.message,
+      success: null,
+      formData: req.body,
+    });
   }
 };
+
+
 
 exports.getOrderById = async (req, res) => {
   const orderId = req.params.id;

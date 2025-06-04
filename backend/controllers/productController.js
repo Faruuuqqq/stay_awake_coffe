@@ -1,13 +1,14 @@
 const productModel = require('../models/productModel');
+const categoryModel = require('../models/categoryModel');
 
 // Get all product with categories
-exports.getAllProducts = async (req, res) => {
+exports.getAllProducts = async (req, res) => { 
   try {
     const products = await productModel.getAllProducts();
     // res.json(products);
-    res.render('index', { products });
+    res.render('products', { products });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).render('error', { message: error.message });
   }
 };
 
@@ -83,3 +84,24 @@ exports.deleteProduct = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.listProductWithFilter = async (req, res) => {
+  try {
+    const { category, priceMin, priceMax, sort } = req.query;
+
+    const categories = await categoryModel.getAllCategories();
+
+    const filterOptions = {
+      category: category || null,
+      priceMin: priceMin !== undefined ? Number(minPrice) : null,
+      priceMax: priceMax !== undefined ? Number(maxPrice) : null,
+      sort: sort || null,
+    };
+
+    const products = await productModel.getProductsWithFilter(filterOptions);
+    res.render('products', { products, categories, filters: filterOptions });
+  } catch (error) {
+    console.error("Error listing products with filter:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+}

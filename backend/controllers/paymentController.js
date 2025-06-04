@@ -4,7 +4,11 @@ exports.createPayment = async (req, res) => {
   const { order_id, method, status, transaction_id, amount_paid, paid_at } = req.body;
 
   if (!order_id || !method || !status || !amount_paid) {
-    return res.status(400).json({ error: `order_id, method, status, and amount_paid are required`});
+    return res.render('payment-page', {
+      error: 'Order ID, payment method, status, and amount paid are required',
+      success: null,
+      formData: req.body,
+    });
   }
 
   try {
@@ -14,14 +18,24 @@ exports.createPayment = async (req, res) => {
       status,
       transaction_id: transaction_id || null,
       amount_paid,
-      paid_at: paid_at || null,
+      paid_at: paid_at || new Date(),
     });
 
-    res.status(201).json({ message: 'Payment successfully created', paymentId});
+    // Render halaman sukses pembayaran
+    res.render('payment-success', {
+      success: 'Payment successfully created',
+      paymentId,
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.render('payment-page', {
+      error: error.message,
+      success: null,
+      formData: req.body,
+    });
   }
 };
+
+
 
 exports.getPaymentById = async (req, res) => {
   const paymentId = req.params.id;

@@ -90,3 +90,43 @@ exports.removeProductCategory = async (productId) => {
     throw new Error('Database error: ' + error.message);
   }
 };
+
+exports.getProductsWithFilter = async ({ category, priceMin, priceMax, sort }) => {
+  let query = 'SELECT * FROM products p ';
+  let params = [];
+  let whereClauses = [];
+
+  if (category) {
+    query += `JOIN product_categories pc ON p.product_id = pc.product_id
+    JOIN categories c ON pc.category_id = c.category_id`;
+    whereClauses.push('c.name =? ?');
+    params.push(category); 
+  }
+
+  if (priceMin !== null) {
+    whereClauses.push('p.price >= ?');
+    params.push(priceMin);
+  }
+
+  if (priceMax !== null) {
+    whereClauses.push('p.price <= ?');
+    params.push(priceMax);
+  }
+
+  if (whereClauses.length > 0) {
+    query += ' WHERE ' + whereClauses.join(' AND ') + ' ';
+  }
+
+  if (sort) {
+    if (sort === 'price_asc' ) query += 'ORDER BY p.price ASC';
+    else if (sort === 'price_desc') query += 'ORDER BY p.price DESC';
+    else if (sort === 'newest') query += 'ORDER BY p.created_at DESC';
+    else if (sort === 'oldest') query += 'ORDER BY p.created_at ASC';
+    else if (sort === 'rating') query += 'ORDER BY p.rating DESC';
+  } else {
+    query += 'ORDER BY p.product_id ASC ';
+  }
+
+  const [rows] = await db.execute(query, params);
+  return rows;
+};
