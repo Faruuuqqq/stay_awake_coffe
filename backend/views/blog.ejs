@@ -1,14 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
-<!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HomePage</title>
-    <meta name="description" content="">
-  <meta name="keywords" content="">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Stay Awake Coffee</title>
   <!-- Favicons -->
   <link href="/assets/img/favicon.png" rel="icon">
   <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
@@ -27,34 +22,36 @@
   <link href="/assets/vendor/drift-zoom/drift-basic.css" rel="stylesheet">
 
   <!-- Main CSS File -->
-  <link href="/assets/css/main.css" rel="stylesheet">
+<link href="/assets/css/main.css" rel="stylesheet">
 </head>
+<body>
 
-<body class="index-page">
-  <!-- Include Header -->
-  <%- include('partials/header') %>
+    <!-- Include Header -->
+    <%- include('partials/header') %>
 
-  <main class="main">
-    <!-- Include Hero Section -->
-    <%- include('partials/hero') %>
+    <section class="blog_area section_gap">
+        <div class="container">
+            <div class="row">
+                <% blogPosts.forEach(post => { %>
+                <div class="col-lg-4 col-md-6">
+                    <div class="single-blog">
+                        <img src="<%= post.image %>" class="img-fluid" alt="Blog Post Image">
+                        <div class="blog-details">
+                            <h4><%= post.title %></h4>
+                            <p><%= post.excerpt %></p>
+                            <a href="/blog/<%= post.id %>" class="primary-btn">Read More</a>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+    </section>
 
-    <!-- Include Info Cards Section -->
-    <%- include('partials/info-cards') %>
+    <!-- Include Footer -->
+    <%- include('partials/footer') %>
 
-    <!-- Include Category Cards Section -->
-    <%- include('partials/category-cards') %>
-
-    <!-- Include Product List Section -->
-    <%- include('partials/product-list') %>
-
-    <!-- Include Best Sellers Section -->
-    <!-- <%- include('partials/best-sellers') %> -->
-  </main>
-
-  <!-- Include Footer -->
-  <%- include('partials/footer-newsletter') %>
-  <%- include('partials/footer') %>
-
+</body>
 
   <!-- Scroll Top -->
   <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>

@@ -5,47 +5,59 @@
         <div class="product-filters isotope-filters mb-5 d-flex justify-content-center" data-aos="fade-up">
           <ul class="d-flex flex-wrap gap-2 list-unstyled">
             <li class="filter-active" data-filter="*">All</li>
-            <li data-filter=".filter-clothing">Clothing</li>
-            <li data-filter=".filter-accessories">Accessories</li>
-            <li data-filter=".filter-electronics">Electronics</li>
+            <% categories.forEach(category => { %>
+              <li data-filter=".filter-<%= category.name%>"><%= category.name %></li>
+            <% }) %>
           </ul>
         </div>
       </div>
     </div>
     <div class="row product-container isotope-container" data-aos="fade-up" data-aos-delay="200">
-      <!-- Product Item 1 -->
-      <div class="col-md-6 col-lg-3 product-item isotope-item filter-clothing">
-        <div class="product-card">
-          <div class="product-image">
-            <span class="badge">Sale</span>
-            <img src="assets/img/product/product-11.webp" alt="Product" class="img-fluid main-img">
-            <img src="assets/img/product/product-11-variant.webp" alt="Product Hover" class="img-fluid hover-img">
-            <div class="product-overlay">
-              <a href="cart.html" class="btn-cart"><i class="bi bi-cart-plus"></i> Add to Cart</a>
-              <div class="product-actions">
-                <a href="#" class="action-btn"><i class="bi bi-heart"></i></a>
-                <a href="#" class="action-btn"><i class="bi bi-eye"></i></a>
-                <a href="#" class="action-btn"><i class="bi bi-arrow-left-right"></i></a>
+      <!-- Dynamically render products from database -->
+      <% products.forEach(product => { %>
+        <div class="col-md-6 col-lg-3 product-item isotope-item filter-<%= product.category%>">
+          <div class="product-card">
+            <div class="product-image">
+              <% if (product.sale) { %>
+                <span class="badge">Sale</span>
+              <% } %>
+              <img src="<%= product.image %>" alt="<%= product.name %>" class="img-fluid main-img">
+              <img src="<%= product.hoverImage %>" alt="<%= product.name %> Hover" class="img-fluid hover-img">
+              <div class="product-overlay">
+                <a href="/cart" class="btn-cart"><i class="bi bi-cart-plus"></i> Add to Cart</a>
+                <div class="product-actions">
+                  <a href="#" class="action-btn"><i class="bi bi-heart"></i></a>
+                  <a href="#" class="action-btn"><i class="bi bi-eye"></i></a>
+                  <a href="#" class="action-btn"><i class="bi bi-arrow-left-right"></i></a>
+                </div>
+              </div>
+            </div>
+            <div class="product-info">
+              <h5 class="product-title"><a href="/products/<%= product.id %>"><%= product.name %></a></h5>
+              <div class="product-price">
+                <% if (product.salePrice && product.salePrice < product.price) { %>
+                  <span class="current-price">$<%= product.salePrice%></span>
+                  <span class="old-price">$<%= product.price %></span>
+                <% } else { %>
+                  <span>$<%= product.price %></span>
+                <% } %>
+              </div>
+              <div class="product-rating">
+                <% for (let i = 0; i < Math.floor(product.rating); i++) { %>
+                  <i class="bi bi-star-fill"></i>
+                <% } %>
+                <% if (product.rating % 1 >= 0.5) { %>
+                  <i class="bi bi-star-half"></i>
+                <% } %>
+                <% for (let i = 0; i < 5 - Math.ceil(product.rating); i++) { %>
+                  <i class="bi bi-star"></i>
+                <% } %>
+                <span>(<%= product.reviewCount %>)</span>
               </div>
             </div>
           </div>
-          <div class="product-info">
-            <h5 class="product-title"><a href="product-details.html">Lorem ipsum dolor sit amet</a></h5>
-            <div class="product-price">
-              <span class="current-price">$89.99</span>
-              <span class="old-price">$129.99</span>
-            </div>
-            <div class="product-rating">
-              <i class="bi bi-star-fill"></i>
-              <i class="bi bi-star-fill"></i>
-              <i class="bi bi-star-fill"></i>
-              <i class="bi bi-star-fill"></i>
-              <i class="bi bi-star-half"></i>
-              <span>(24)</span>
-            </div>
-          </div>
         </div>
-      </div><!-- End Product Item 1 -->
+      <% }) %>
     </div>
   </div>
 </section><!-- /Product List Section -->
