@@ -276,30 +276,34 @@ exports.changePassword = async (req, res) => {
 exports.getAccountPage = async (req, res) => {
   const userId = req.userId;
 
+  if (!userId) {
+    return res.redirect('/users/login-register');  // Redirect if userId is missing
+  }
+  
   try {
-    // Ambil data user profile
+    // Log userId to check if it's being set correctly
+    console.log('userId:', userId);
+
     const user = await userModel.findById(userId);
-    if (!user) return res.redirect('/users/login-register');
+    if (!user) {
+      console.log('User not found');
+      return res.redirect('/users/login-register');
+    }
 
-    // Ambil orders user
     const orders = await orderModel.getOrdersByUserId(userId);
+    console.log('Orders:', orders);  // Log orders to check if they’re being fetched
 
-    // Ambil wishlist user
-    // const wishlist = await wishlistModel.getWishlistByUserId(userId);
-
-    // Ambil alamat user
     const addresses = await addressModel.getAddressesByUserId(userId);
+    console.log('Addresses:', addresses);  // Log addresses
 
-    // Ambil payment methods user
     const payments = await paymentModel.getPaymentsByUserId(userId);
+    console.log('Payments:', payments);  // Log payments
 
-    // Render account page dengan data lengkap
     res.render('account', {
       user,
       orders,
       addresses,
       payments,
-      // bisa tambah variabel lain untuk kontrol tampilan
     });
   } catch (error) {
     console.error('Error loading account page:', error);

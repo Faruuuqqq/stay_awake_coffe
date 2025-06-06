@@ -13,12 +13,13 @@ exports.findByEmail = async (email) => {
 exports.findById = async (id) => {
   console.log(userId);
   try {
-    const [user] = await db.execute('SELECT * FROM users WHERE user_id =? ', [id]);
+    const [user] = await db.execute('SELECT * FROM users WHERE user_id = ? ', [id]);
     return user[0] || null;
   } catch (error) {
     throw new Error('Database error: ' + error.message);
   }
 }
+
 
 exports.createUser = async ({ name, email, password, role }) => {
   try {

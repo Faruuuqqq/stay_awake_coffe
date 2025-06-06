@@ -2,13 +2,17 @@ const productModel = require('../models/productModel');
 const categoryModel = require('../models/categoryModel');
 
 // Get all product with categories
-exports.getAllProducts = async (req, res) => { 
+exports.getAllProducts = async (req, res) => {
   try {
     const products = await productModel.getAllProducts();
-    // res.json(products);
-    res.render('products', { products });
+    const categories = await categoryModel.getAllCategories();
+    res.render('products', {
+      products,
+      categories,
+    });
   } catch (error) {
-    res.status(500).render('error', { message: error.message });
+    console.error('Error loading products:', error.message);
+    res.status(500).send('Internal Server Error');
   }
 };
 
@@ -18,7 +22,14 @@ exports.getProductById = async (req, res) => {
   try {
     const product = await productModel.getProductById(id);
     if (!product) return res.status(404).json({ error: 'Product not found' });
-    res.json(product);
+
+    // Mengambil kategori produk yang sudah digabungkan dalam satu string
+    const categories = product.categories ? product.categories.split(',') : [];
+
+    res.render('product-detail', {
+      product,
+      categories,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -105,3 +116,16 @@ exports.listProductWithFilter = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 }
+
+exports.getBestSellers = async (req, res) => {
+  try {
+    const products = await productModel.getAllProducts();  // Assuming this fetches all products
+    res.render('home', { 
+      products: products.filter(product => product.isBestSeller), // Only passing best-sellers
+      categories: await categoryModel.getAllCategories()  // Assuming you also want to display categories
+    });
+  } catch (error) {
+    console.error('Error fetching best sellers:', error.message);
+    res.status(500).send('Internal Server Error');
+  }
+};
