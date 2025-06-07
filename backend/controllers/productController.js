@@ -5,7 +5,15 @@ const categoryModel = require('../models/categoryModel');
 exports.getAllProducts = async (req, res) => {
   try {
     const products = await productModel.getAllProducts();
+    if (!products || products.length === 0) {
+      return res.status(404).json({ error: 'No products found' });
+    }
+
     const categories = await categoryModel.getAllCategories();
+    if (!categories || categories.length === 0) {
+      return res.status(404).json({ error: 'No categories found' });
+    }
+    // Mengambil kategori produk yang sudah digabungkan dalam satu string
     res.render('products', {
       products,
       categories,
@@ -129,3 +137,5 @@ exports.getBestSellers = async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 };
+
+exports.getProductsPage

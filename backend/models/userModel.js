@@ -10,10 +10,10 @@ exports.findByEmail = async (email) => {
  }
 }
 
-exports.findById = async (id) => {
+exports.findById = async (userId) => {
   console.log(userId);
   try {
-    const [user] = await db.execute('SELECT * FROM users WHERE user_id = ? ', [id]);
+    const [user] = await db.execute('SELECT * FROM users WHERE user_id = ? ', [userId]);
     return user[0] || null;
   } catch (error) {
     throw new Error('Database error: ' + error.message);

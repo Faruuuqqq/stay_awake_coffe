@@ -41,7 +41,8 @@ exports.addOrUpdateCartItem = async (cartId, productId, quantity) => {
     if (existing.length > 0) {
       // Update quantity karna item sudah ada
       const [result] = await db.execute (
-        `UPDATE cart_items SET quantity = quantity + ? WHERE cart_id = ? AND product_id = ?`, [quantity]
+        `UPDATE cart_items SET quantity = quantity + ? WHERE cart_id = ? AND product_id = ?`, 
+        [quantity, cartId, productId]
       );
       return result.affectedRows > 0;
 
@@ -62,11 +63,7 @@ exports.addOrUpdateCartItem = async (cartId, productId, quantity) => {
 exports.updateCartItem = async (cartId, productId, quantity) => {
   try {
     if (quantity <= 0) {
-      const [result] = await db.execute(
-        `DELETE FROM cart_items WHERE cart_id = ? AND product_id = ?`,
-        [cartId, productId]
-      );
-      return result.affectedRows > 0;
+      return await this.removeCartItem(cartId, productId);
     }
     const [result] = await db.execute(
       `UPDATE cart_items SET quantity = ? WHERE cart_id = ? AND product_id = ?`,

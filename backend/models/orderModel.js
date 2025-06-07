@@ -58,6 +58,7 @@ exports.getOrderByUserId = async (userId) => {
       'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC',
       [userId]
     );
+    if (orders.length === 0) return [];
   } catch (error) {
     throw new Error('Database error: ' + error.message);
   }
