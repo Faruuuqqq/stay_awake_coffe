@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Products Page</title>
+
   <link href="/assets/img/favicon.png" rel="icon" />
   <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon" />
   <link href="https://fonts.googleapis.com" rel="preconnect" />
@@ -69,7 +70,7 @@
                   <option value="25to50" <%= filters.priceRange === '25to50' ? 'selected' : '' %>>$25 to $50</option>
                   <option value="50to100" <%= filters.priceRange === '50to100' ? 'selected' : '' %>>$50 to $100</option>
                   <option value="100to200" <%= filters.priceRange === '100to200' ? 'selected' : '' %>>$100 to $200</option>
-                  <option value="above200" <%= filters.priceRange === 'above200' ? 'selected' : '' %>>$200 &amp; Above</option>
+                  <option value="above200" <%= filters.priceRange === 'above200' ? 'selected' : '' %>>$200 & Above</option>
                 </select>
               </div>
             </div>
@@ -111,7 +112,6 @@
               </div>
             </div>
           </div>
-          <!-- You can add active filters display here if needed -->
         </div>
       </div>
     </section>
@@ -152,9 +152,6 @@
               </ul>
             </div>
 
-            <!-- Price Range Widget (optional) -->
-            <!-- Add your price range filter here if needed -->
-
           </div>
         </div>
 
@@ -163,86 +160,105 @@
           <section id="category-product-list" class="category-product-list section">
             <div class="container" data-aos="fade-up" data-aos-delay="100">
               <div class="row gy-4">
-                <% if (products.length === 0) { %>
-                  <p>No products found.</p>
-                <% } else { %>
-                  <% products.forEach(product => { %>
-                    <div class="col-lg-6">
-                      <div class="product-box">
-                        <div class="product-thumb">
-                          <% if(product.label) { %>
-                            <span class="product-label"><%= product.label %></span>
-                          <% } %>
-                          <img src="<%= product.image %>" alt="<%= product.name %>" class="main-img" loading="lazy" />
-                          <div class="product-overlay">
-                            <div class="product-quick-actions">
-                              <button type="button" class="quick-action-btn"><i class="bi bi-heart"></i></button>
-                              <button type="button" class="quick-action-btn"><i class="bi bi-arrow-repeat"></i></button>
-                              <button type="button" class="quick-action-btn"><i class="bi bi-eye"></i></button>
-                            </div> 
-                            <div class="add-to-cart-container">
-                              <% if(product.stock > 0) { %>
-                                <button type="button" class="add-to-cart-btn">Add to Cart</button>
-                              <% } else { %>
-                                <button type="button" class="add-to-cart-btn disabled">Sold Out</button>
-                              <% } %>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="product-content">
-                          <div class="product-details">
-                            <h3 class="product-title"><a href="/products/<%= product.id %>"><%= product.name %></a></h3>
-                            <div class="product-price">
-                              <% if(product.salePrice && product.salePrice < product.price) { %>
-                                <span class="original">$<%= product.price %></span>
-                                <span class="sale">$<%= product.salePrice%></span>
-                              <% } else { %>
-                                <span>$<%= product.price%></span>
-                              <% } %>
-                            </div>
-                          </div>
-                          <div class="product-rating-container">
-                            <div class="rating-stars">
-                              <% for(let i=0; i < Math.floor(product.rating); i++) { %>
-                                <i class="bi bi-star-fill"></i>
-                              <% } %>
-                              <% if(product.rating % 1 >= 0.5) { %>
-                                <i class="bi bi-star-half"></i>
-                              <% } %>
-                              <% for(let i=0; i < 5 - Math.ceil(product.rating); i++) { %>
-                                <i class="bi bi-star"></i>
-                              <% } %>
-                            </div>
-                            <span class="rating-number"><%= product.rating%></span>
-                          </div>
-                          <div class="product-color-options">
-                            <% if(product.colors && product.colors.length) { %>
-                              <% product.colors.forEach(color => { %>
-                                <span class="color-option <%= color.active ? 'active' : '' %>" style="background-color: <%= color.hex %>"></span>
-                              <% }) %>
-                            <% } %>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  <% }) %>
-                <% } %>
-              </div>
+ <% if (products && products.length > 0) { %>
+  <% products.forEach(product => { %>
+    <div class="col-lg-6">
+      <div class="product-box" data-product-id="<%= product.id %>">
+        <div class="product-thumb">
+          <% if(product.label) { %>
+            <span class="product-label"><%= product.label %></span>
+          <% } %>
+          <img src="<%= product.image %>" alt="<%= product.name %>" class="main-img" loading="lazy" />
+          <div class="product-overlay">
+            <div class="product-quick-actions">
+              <button type="button" class="quick-action-btn"><i class="bi bi-heart"></i></button>
+              <button type="button" class="quick-action-btn"><i class="bi bi-arrow-repeat"></i></button>
+              <button type="button" class="quick-action-btn"><i class="bi bi-eye"></i></button>
+            </div> 
+            <div class="add-to-cart-container">
+              <% if(product.stock > 0) { %>
+                <button type="button" class="add-to-cart-btn">Add to Cart</button>
+              <% } else { %>
+                <button type="button" class="add-to-cart-btn disabled">Sold Out</button>
+              <% } %>
             </div>
-          </section>
+          </div>
         </div>
-
+        <div class="product-content">
+          <div class="product-details">
+            <h3 class="product-title"><a href="/products/<%= product.id %>"><%= product.name %></a></h3>
+            <div class="product-price">
+              <% if(product.salePrice && product.salePrice < product.price) { %>
+                <span class="original">$<%= product.price %></span>
+                <span class="sale">$<%= product.salePrice%></span>
+              <% } else { %>
+                <span>$<%= product.price%></span>
+              <% } %>
+            </div>
+          </div>
+          <div class="product-rating-container">
+            <div class="rating-stars">
+              <% for(let i=0; i < Math.floor(product.rating); i++) { %>
+                <i class="bi bi-star-fill"></i>
+              <% } %>
+              <% if(product.rating % 1 >= 0.5) { %>
+                <i class="bi bi-star-half"></i>
+              <% } %>
+              <% for(let i=0; i < 5 - Math.ceil(product.rating); i++) { %>
+                <i class="bi bi-star"></i>
+              <% } %>
+            </div>
+            <span class="rating-number"><%= product.rating%></span>
+          </div>
+        </div>
       </div>
     </div>
-  </main>
-
+  <% }) %>
+<% } else { %>
+  <p>No products found.</p>
+<% } %>
+  <!-- Footer -->
   <%- include('partials/footer') %>
 
-  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
-    <i class="bi bi-arrow-up-short"></i>
-  </a>
+  <script>
+    // Fungsi untuk menambahkan produk ke keranjang
+    function addToCart(productId) {
+      const quantity = 1;  // Misalnya kita tambahkan satu produk per klik
 
-  <div id="preloader"></div>
+      fetch('/cart/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: productId,
+          quantity: quantity,
+        }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message) {
+          alert(data.message);  // Menampilkan pesan sukses
+        } else {
+          alert(data.error);  // Menampilkan pesan error
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    }
+
+    // Menambahkan event listener ke tombol "Add to Cart"
+    document.addEventListener('DOMContentLoaded', () => {
+      const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+      addToCartButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+          const productId = event.target.closest('.product-box').getAttribute('data-product-id');
+          addToCart(productId);  // Panggil fungsi untuk menambah produk ke keranjang
+        });
+      });
+    });
+  </script>
 
   <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   <script src="/assets/vendor/php-email-form/validate.js"></script>
