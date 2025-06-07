@@ -4,7 +4,8 @@ const productController = require('../controllers/productController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 // Public routes
-router.get('/', productController.getAllProducts);
+// router.get('/', productController.getAllProducts);
+router.get('/', productController.listProductWithFilter);
 router.get('/:id', productController.getProductById);
 
 // Admin routes

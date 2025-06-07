@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/paymentController');
 const authMiddleware = require('../middlewares/authMiddleware');
-const adminMiddleware = require('../middlewares/adminMiddleware');
 
-// User/admin buat pembayaran (simulasi)
+// Simulasi buat pembayaran order
 router.post('/', authMiddleware, paymentController.createPayment);
+router.get('/', authMiddleware, paymentController.getPaymentPage);
 
 // Lihat pembayaran berdasarkan ID payment
 router.get('/:id', authMiddleware, paymentController.getPaymentById);

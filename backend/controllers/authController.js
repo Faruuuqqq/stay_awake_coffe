@@ -53,6 +53,7 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
+
   if (!email || !password) {
     return res.render('login-register', { error: "Email and password are required", formData: req.body });
   }
@@ -62,14 +63,21 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.render('login-register', { error: 'Invalid email or password', formData: req.body });
     }
+
     const validPassword = await userModel.verifyPassword(password, user.password);
     if (!validPassword) {
       return res.render('login-register', { error: 'Invalid email or password', formData: req.body });
     }
 
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRESIN });
+    const token = jwt.sign({ userId: user.user_id, isAdmin: user.is_admin }, JWT_SECRET, { expiresIn: JWT_EXPIRESIN });
 
-    res.cookie('token', token, { httpOnly: true });
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Pastikan secure aktif di production
+      sameSite: 'strict', // Untuk menghindari CSRF
+      maxAge: 3600000, // Token kadaluarsa setelah 1 jam
+    });
+
     res.render('login-register', {
       success: 'Login successful! Redirecting to homepage...',
       error: null,
@@ -85,21 +93,9 @@ exports.login = async (req, res) => {
 
 exports.logout = (req, res) => {
   res.clearCookie('token');
-  res.json({ message: 'Logout successful' });
+  res.status(200).json({ message: 'Logout successful' });
 };
 
-exports.profile = async (req, res) => {
-  try {
-    const user = await userModel.findById(req.userId);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    const { password, ...userData } = user; 
-    res.json(userData);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
 
 async function sendResetEmail(email, token) {
   const transporter = nodemailer.createTransport({
@@ -274,15 +270,11 @@ exports.changePassword = async (req, res) => {
 };
 
 exports.getAccountPage = async (req, res) => {
-  const userId = req.userId;
-
-  if (!userId) {
-    return res.redirect('/users/login-register');  // Redirect if userId is missing
-  }
+  const userId = req.userId; // Ambil userId dari body atau middleware auth
   
   try {
     // Log userId to check if it's being set correctly
-    console.log('userId:', userId);
+    
 
     const user = await userModel.findById(userId);
     if (!user) {
@@ -290,13 +282,13 @@ exports.getAccountPage = async (req, res) => {
       return res.redirect('/users/login-register');
     }
 
-    const orders = await orderModel.getOrdersByUserId(userId);
+    const orders = await orderModel.getOrderByUserId(userId);
     console.log('Orders:', orders);  // Log orders to check if they’re being fetched
 
     const addresses = await addressModel.getAddressesByUserId(userId);
     console.log('Addresses:', addresses);  // Log addresses
 
-    const payments = await paymentModel.getPaymentsByUserId(userId);
+    const payments = await paymentModel.getPaymentByUserId(userId);
     console.log('Payments:', payments);  // Log payments
 
     res.render('account', {

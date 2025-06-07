@@ -41,4 +41,17 @@ router.get('/error', (req, res) => {
   res.render('404', { title: 'Stay Awake Coffee - Error Page' });
 });
 
+router.get('/terms', (req, res) => {
+  res.render('tos', { title: 'Stay Awake Coffee - Terms of Service Page' });
+});
+
+router.get('/faq', (req, res) => {
+  res.render('faq', { title: 'Stay Awake Coffee - FAQ Page' });
+});
+
+router.get('/privacy', (req, res) => {
+  res.render('privacy', { title: 'Stay Awake Coffee - FAQ Page' });
+});
+
+
 module.exports = router;
