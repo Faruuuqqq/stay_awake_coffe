@@ -17,9 +17,7 @@ router.get('/forgot-password', (req, res) => {
   res.render('forgot-password', { error: null, success: null, formData: {} });
 });
 
-router.post('/forgot-password', authController.requestPasswordReset);
-router.get('/reset-password/:token', authController.renderResetPassword);
-router.post('/reset-password/:token', authController.resetPassword);
+
 
 // Protected routes (require authentication)
 router.post('/change-password', authMiddleware, authController.changePassword);
