@@ -73,9 +73,9 @@ exports.login = async (req, res) => {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Pastikan secure aktif di production
-      sameSite: 'strict', // Untuk menghindari CSRF
-      maxAge: 3600000, // Token kadaluarsa setelah 1 jam
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 3600000, 
     });
 
     res.render('login-register', {
@@ -96,105 +96,25 @@ exports.logout = (req, res) => {
   res.status(200).json({ message: 'Logout successful' });
 };
 
+exports.updateProfile = async (req, res) => {
+  const { name, email } = req.body;
+  const userId = req.userId;
 
-async function sendResetEmail(email, token) {
-  const transporter = nodemailer.createTransport({
-    host: 'smpt.example.com',
-    port: 587,
-    auth: { user: 'your-email@example.com', pass: 'your-password' },
-  });
-
-  const resetLink = `http://localhost.com/users/reset-password/${token}`;
-
-  await transporter.sendMail({
-    from: '"Stay Awake Coffe" <no-reply@stayawake.com>',
-    to: email,
-    subject: 'Reset your password',
-    html: `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`
-  });
+  try {
+    await userModel.updateUserProfile(name, email, userId)
+    res.redirect('/users/account');
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    return res.render('account', {
+      error: 'Failed to update profile',
+      success: null,
+      formData: req.body
+    });
+  }
 }
 
-// Request reset password: generate token, simpan, kirim email
-exports.requestPasswordReset = async (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.render('forgot-password', { error: 'Email is required', success: null, formData: req.body });
-  }
-
-  try {
-    const user = await userModel.findByEmail(email);
-    if (!user) {
-      return res.render('forgot-password', { success: 'Reset link sent if email exists', error: null, formData: {} });
-    }
-
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); 
-
-    // Simpan token di DB (implementasi ada di model)
-    await userModel.saveResetToken(user.id, token, expiresAt);
-
-    // Kirim email dengan link reset
-    await sendResetEmail(email, token);
-
-    res.render('forgot-password', { success: 'Reset link sent if email exists', error: null, formData: {} });
-  } catch (err) {
-    res.render('forgot-password', { error: 'Failed to send reset link', success: null, formData: req.body });
-  }
-};
-
-// Render halaman reset password (token validasi)
-exports.renderResetPassword = async (req, res) => {
-  const { token } = req.params;
-  try {
-    const validToken = await userModel.validateResetToken(token);
-    if (!validToken) {
-      return res.render('reset-password', { error: 'Invalid or expired token', success: null, formData: {}, token: null });
-    }
-    res.render('reset-password', { error: null, success: null, formData: {}, token });
-  } catch (err) {
-    res.render('reset-password', { error: 'Internal error', success: null, formData: {}, token: null });
-  }
-};
-
-// Proses reset password dengan token
-exports.resetPassword = async (req, res) => {
-  const { token } = req.params;
-  const { newPassword, confirmPassword } = req.body;
-
-  if (!newPassword || !confirmPassword) {
-    return res.render('reset-password', { error: 'Both password fields are required', success: null, formData: req.body, token });
-  }
-
-  if (newPassword !== confirmPassword) {
-    return res.render('reset-password', { error: 'Passwords do not match', success: null, formData: req.body, token });
-  }
-
-  if (newPassword.length < 6) {
-    return res.render('reset-password', { error: 'Password must be at least 6 characters', success: null, formData: req.body, token });
-  }
-
-  try {
-    const validToken = await userModel.validateResetToken(token);
-    if (!validToken) {
-      return res.render('reset-password', { error: 'Invalid or expired token', success: null, formData: {}, token: null });
-    }
-
-    const success = await userModel.updatePassword(validToken.user_id, newPassword);
-    if (success) {
-      // Hapus token setelah berhasil reset
-      await userModel.deleteResetToken(token);
-
-      return res.render('reset-password', { success: 'Password reset successful', error: null, formData: {}, token: null });
-    } else {
-      return res.render('reset-password', { error: 'Failed to update password', success: null, formData: req.body, token });
-    }
-  } catch (err) {
-    return res.render('reset-password', { error: 'Internal error', success: null, formData: req.body, token });
-  }
-};
-
 exports.changePassword = async (req, res) => {
-  const userId = req.userId; // userId diisi oleh middleware auth setelah decode JWT
+  const userId = req.userId;
   const { email, oldPassword, newPassword } = req.body;
 
   // Validasi input wajib
@@ -270,12 +190,9 @@ exports.changePassword = async (req, res) => {
 };
 
 exports.getAccountPage = async (req, res) => {
-  const userId = req.userId; // Ambil userId dari body atau middleware auth
+  const userId = req.userId;
   
   try {
-    // Log userId to check if it's being set correctly
-    
-
     const user = await userModel.findById(userId);
     if (!user) {
       console.log('User not found');

@@ -4,7 +4,7 @@ exports.createReview = async (req, res) => {
   const userId = req.userId;
   const { productId, rating, comment } = req.body;
 
-  if (!product_Id || !rating || rating < 1 || rating > 5) {
+  if (!productId || !rating || rating < 1 || rating > 5) {
     return res.status(400).json({ message: 'Invalid input data' });
   }
 

@@ -104,27 +104,6 @@ exports.deleteProduct = async (req, res) => {
   }
 };
 
-exports.listProductWithFilter = async (req, res) => {
-  try {
-    const { category, priceMin, priceMax, sort } = req.query;
-
-    const categories = await categoryModel.getAllCategories();
-
-    const filterOptions = {
-      category: category || null,
-      priceMin: priceMin !== undefined ? Number(minPrice) : null,
-      priceMax: priceMax !== undefined ? Number(maxPrice) : null,
-      sort: sort || null,
-    };
-
-    const products = await productModel.getProductsWithFilter(filterOptions);
-    res.render('products', { products, categories, filters: filterOptions });
-  } catch (error) {
-    console.error("Error listing products with filter:", error.message);
-    res.status(500).json({ error: error.message });
-  }
-}
-
 exports.getBestSellers = async (req, res) => {
   try {
     const products = await productModel.getAllProducts();  // Assuming this fetches all products
@@ -138,4 +117,43 @@ exports.getBestSellers = async (req, res) => {
   }
 };
 
-exports.getProductsPage
+// exports.getProductsPage = async (req, res) => {
+// const { category, priceMin = 0, priceMax = 1000 } = req.query;
+
+//   try {
+//     // Mengambil kategori produk
+//     const categories = await categoryModel.getAllCategories();
+
+//     // Mengambil produk berdasarkan kategori dan harga
+//     const products = await productModel.getProductsWithFilter({
+//       category,
+//       priceMin: parseFloat(priceMin),
+//       priceMax: parseFloat(priceMax),
+//     });
+
+//     // Mengirim data kategori dan produk ke view
+//     res.render('products', {
+//       categories,
+//       products,
+//       title: 'Stay Awake Coffee - Products',
+//     });
+//   } catch (error) {
+//     console.error('Error loading products page:', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// } ;
+
+exports.getProductsPage = async (req, res) => {
+  try {
+    // Mengambil semua produk
+    const products = await productModel.getAllProducts();
+
+    res.render('products', {
+      products,
+      title: 'Stay Awake Coffee - Products'
+    });
+  } catch (error) {
+    console.error('Error loading products page:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
