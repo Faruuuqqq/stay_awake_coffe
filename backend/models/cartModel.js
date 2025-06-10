@@ -75,6 +75,32 @@ exports.updateCartItem = async (cartId, productId, quantity) => {
   }
 }
 
+exports.getCartItemByProductId = async (userId, productId) => {
+  try {
+    const [cart] = await db.execute(
+      `SELECT ci.* FROM carts c
+       JOIN cart_items ci ON c.cart_id = ci.cart_id
+       WHERE c.user_id = ? AND ci.product_id = ?`,
+      [userId, productId]
+    );
+    return cart[0] || null;
+  } catch (error) {
+    throw new Error('Database error: ' + error.message);
+  }
+};
+
+exports.createCart = async (userId) => {
+  try {
+    const [result] = await db.execute(
+      `INSERT INTO carts (user_id) VALUES (?)`,
+      [userId]
+    );
+    return { cart_id: result.insertId, user_id: userId };
+  } catch (error) {
+    throw new Error('Database error: ' + error.message);
+  }
+};
+
 // hapus item dari cart
 exports.removeCartItem = async (cartId, productId) => {
   try {

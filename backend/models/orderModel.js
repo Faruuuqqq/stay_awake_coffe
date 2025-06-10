@@ -19,7 +19,7 @@ exports.createOrderItems = async (orderId, items) => {
     const queries = items.map(item => {
       return db.execute(
         `INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)`,
-        [orderId, item.productId, item.quantity, item.price]
+        [orderId, item.product_id, item.quantity, item.price]
       );
     });
     await Promise.all(queries);
@@ -41,7 +41,7 @@ exports.getOrderById = async (orderId) => {
     const [items] = await db.execute(
       `SELECT oi.*, p.name, p.image
        FROM order_items oi
-       JOIN products p ON oi.product_id = p.product)id
+       JOIN products p ON oi.product_id = p.product.id
        WHERE oi.order_id = ?`,
       [orderId]
     );
@@ -59,6 +59,7 @@ exports.getOrderByUserId = async (userId) => {
       [userId]
     );
     if (orders.length === 0) return [];
+    return orders;
   } catch (error) {
     throw new Error('Database error: ' + error.message);
   }

@@ -2,6 +2,16 @@ const db = require('../config/db');
 
 exports.getAllProducts = async () => {
   try {
+    const [rows] = await db.execute('SELECT * FROM products ORDER BY product_id ASC');
+    return rows;
+  } catch (error) {
+    console.error('Error fetching all products:', error.message);
+    throw error;
+  }
+};
+
+exports.getAllProductsWithCategories = async () => {
+  try {
     const [rows] = await db.execute(
       `SELECT p.*, GROUP_CONCAT(c.name) AS categories
       FROM products p
@@ -48,7 +58,7 @@ exports.updateProduct = async (id, { name, description, price, image, stock, cat
   try {
     const [result] = await db.execute(
       `UPDATE products SET name = ?, description = ?, price = ?, image = ?, stock = ?
-       WHERE id = ?`,
+       WHERE product_id = ?`,
       [name, description, price, image, stock, id]
     );
     return result.affectedRows > 0;
@@ -91,42 +101,65 @@ exports.removeProductCategory = async (productId) => {
   }
 };
 
-exports.getProductsWithFilter = async ({ category, priceMin, priceMax, sort }) => {
-  let query = 'SELECT * FROM products p ';
+
+// Mengambil produk dengan filter kategori dan harga
+exports.getProductsWithFilter = async (filters) => {
+  let query = `SELECT p.* FROM products p `;
   let params = [];
-  let whereClauses = [];
 
-  if (category) {
-    query += `JOIN product_categories pc ON p.product_id = pc.product_id
-    JOIN categories c ON pc.category_id = c.category_id`;
-    whereClauses.push('c.name =? ?');
-    params.push(category); 
+  // Menambahkan filter kategori jika ada
+  if (filters.category) {
+    query += `JOIN product_categories pc ON p.product_id = pc.product_id 
+              JOIN categories c ON pc.category_id = c.category_id `;
+    query += `WHERE c.category_id = ? `;
+    params.push(filters.category);
   }
 
-  if (priceMin !== null) {
-    whereClauses.push('p.price >= ?');
-    params.push(priceMin);
+  // Menambahkan filter harga jika ada
+  if (filters.priceMin || filters.priceMax) {
+    if (params.length) query += 'AND ';  // Menambahkan AND jika sudah ada filter sebelumnya
+    query += `WHERE p.price >= ? AND p.price <= ? `;
+    params.push(filters.priceMin, filters.priceMax);
   }
 
-  if (priceMax !== null) {
-    whereClauses.push('p.price <= ?');
-    params.push(priceMax);
-  }
-
-  if (whereClauses.length > 0) {
-    query += ' WHERE ' + whereClauses.join(' AND ') + ' ';
-  }
-
-  if (sort) {
-    if (sort === 'price_asc' ) query += 'ORDER BY p.price ASC';
-    else if (sort === 'price_desc') query += 'ORDER BY p.price DESC';
-    else if (sort === 'newest') query += 'ORDER BY p.created_at DESC';
-    else if (sort === 'oldest') query += 'ORDER BY p.created_at ASC';
-    else if (sort === 'rating') query += 'ORDER BY p.rating DESC';
+  // Menambahkan sorting jika ada
+  if (filters.sort) {
+    query += `ORDER BY p.price ${filters.sort === 'price_asc' ? 'ASC' : 'DESC'}`;
   } else {
-    query += 'ORDER BY p.product_id ASC ';
+    query += `ORDER BY p.product_id ASC `;
   }
 
-  const [rows] = await db.execute(query, params);
-  return rows;
+  try {
+    const [rows] = await db.execute(query, params);
+    return rows;
+  } catch (error) {
+    console.error('Error fetching filtered products:', error.message);
+    throw error;
+  }
+};
+
+// Mengambil produk dengan pagination
+exports.getProductsWithPagination = async (page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
+  try {
+    const [rows] = await db.execute(
+      'SELECT * FROM products ORDER BY product_id ASC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+    return rows;
+  } catch (error) {
+    console.error('Error fetching paginated products:', error.message);
+    throw error;
+  }
+};
+
+// Menghitung total produk untuk pagination
+exports.getTotalProductsCount = async () => {
+  try {
+    const [rows] = await db.execute('SELECT COUNT(*) AS count FROM products');
+    return rows[0].count;
+  } catch (error) {
+    console.error('Error fetching total products count:', error.message);
+    throw error;
+  }
 };
