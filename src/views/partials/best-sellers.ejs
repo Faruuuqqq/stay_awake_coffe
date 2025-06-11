@@ -1,0 +1,66 @@
+<section id="best-sellers" class="best-sellers section">
+  <div class="container section-title" data-aos="fade-up">
+    <h2>Best Sellers</h2>
+    <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
+  </div><!-- End Section Title -->
+
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+    <div class="row gy-4">
+      <!-- Dynamically render best-selling products -->
+      <% products.filter(product => product.isBestSeller).forEach(product => { %>
+        <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="<%= 100 + (products.indexOf(product) * 50) %>">
+          <div class="product-card">
+            <div class="product-image">
+              <img src="<%= product.image %>" class="img-fluid default-image" alt="<%= product.name %>" loading="lazy">
+              <img src="<%= product.hoverImage %>" class="img-fluid hover-image" alt="<%= product.name %> Hover" loading="lazy">
+              <% if (product.sale) { %>
+                <div class="product-tags">
+                  <span class="badge bg-sale">Sale</span>
+                </div>
+              <% } %>
+              <% if (product.isNew) { %>
+                <div class="product-tags">
+                  <span class="badge bg-accent">New</span>
+                </div>
+              <% } %>
+              <div class="product-actions">
+                <button class="btn-wishlist" type="button" aria-label="Add to wishlist">
+                  <i class="bi bi-heart"></i>
+                </button>
+                <button class="btn-quickview" type="button" aria-label="Quick view">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+            </div>
+            <div class="product-info">
+              <h3 class="product-title"><a href="/products/<%= product.id %>"><%= product.name %></a></h3>
+              <div class="product-price">
+                <% if (product.salePrice && product.salePrice < product.price) { %>
+                  <span class="current-price">$<%= product.salePrice %></span>
+                  <span class="original-price">$<%= product.price%></span>
+                <% } else { %>
+                  <span>$<%= product.price.toFixed(2) %></span>
+                <% } %>
+              </div>
+              <div class="product-rating">
+                <% for (let i = 0; i < Math.floor(product.rating); i++) { %>
+                  <i class="bi bi-star-fill"></i>
+                <% } %>
+                <% if (product.rating % 1 >= 0.5) { %>
+                  <i class="bi bi-star-half"></i>
+                <% } %>
+                <% for (let i = 0; i < 5 - Math.ceil(product.rating); i++) { %>
+                  <i class="bi bi-star"></i>
+                <% } %>
+                <span class="rating-count">(<%= product.reviewCount %>)</span>
+              </div>
+              <button class="btn btn-add-to-cart">
+                <i class="bi bi-bag-plus me-2"></i>Add to Cart
+              </button>
+            </div>
+          </div>
+        </div><!-- End Product -->
+      <% }) %>
+    </div>
+  </div>
+</section><!-- /Best Sellers Section -->

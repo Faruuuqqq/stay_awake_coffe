@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Page</title>
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+
+  <link href="/assets/img/favicon.png" rel="icon">
+  <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
+  <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+  <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+  <link href="/assets/vendor/aos/aos.css" rel="stylesheet">
+  <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+  <link href="/assets/vendor/drift-zoom/drift-basic.css" rel="stylesheet">
+
+  <link href="/assets/css/main.css" rel="stylesheet">
+  <link href="/assets/css/custom-toast.css" rel="stylesheet">
+</head>
+<body>
+
+<%- include('partials/header') %>
+
+<main class="main">
+
+  <div class="page-title light-background">
+    <div class="container d-lg-flex justify-content-between align-items-center">
+      <h1 class="mb-2 mb-lg-0">Payment</h1>
+      <nav class="breadcrumbs">
+        <ol>
+          <li><a href="/">Home</a></li>
+          <li class="current">Payment</li>
+        </ol>
+      </nav>
+    </div>
+  </div><section id="payment" class="payment section">
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+      <% if (error) { %>
+        <div class="alert alert-danger" role="alert">
+          <%= error %>
+        </div>
+      <% } %>
+      <% if (success) { %>
+        <div class="alert alert-success" role="alert">
+          <%= success %>
+        </div>
+      <% } %>
+      <div class="row g-4"> <%# Added g-4 for consistent spacing %>
+        <div class="col-lg-7">
+          <div class="checkout-container p-4 bg-white rounded shadow-sm" data-aos="fade-up"> <%# Use checkout-container for consistency %>
+            <div class="checkout-section"> <%# Wrap content in checkout-section %>
+              <div class="section-header mb-4"> <%# Add header styling %>
+                <div class="section-number">1</div>
+                <h3>Order Details for Payment</h3>
+              </div>
+              <div class="section-content"> <%# Wrap content in section-content %>
+                <% if (orderDetails) { %>
+                  <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <span>Order ID</span>
+                      <strong>#<%= orderDetails.order_id %></strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <span>Order Status</span>
+                      <span><%= orderDetails.status %></span>
+                    </li>
+                    <% if (orderDetails.items && orderDetails.items.length > 0) { %>
+                      <li class="list-group-item">
+                        <h5 class="mb-2">Items:</h5>
+                        <ul class="list-unstyled mb-0 ms-3">
+                          <% orderDetails.items.forEach(item => { %>
+                            <li class="mb-1"><i class="bi bi-dot me-2"></i><%= item.name %> (x<%= item.quantity %>) - $<%= (parseFloat(item.price * item.quantity)).toFixed(2) %></li>
+                          <% }) %>
+                        </ul>
+                      </li>
+                    <% } %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-light fw-bold">
+                      <span>Total Amount Due</span>
+                      <strong>$<%= parseFloat(orderDetails.total_price).toFixed(2) %></strong>
+                    </li>
+                  </ul>
+
+                  <h4 class="mb-3">Choose Payment Method</h4>
+                  <form id="paymentForm" class="payment-form">
+                    <input type="hidden" name="order_id" value="<%= orderDetails.order_id %>">
+                    <input type="hidden" name="amount_paid" value="<%= orderDetails.total_price %>">
+
+                    <div class="payment-options mb-4">
+                      <div class="form-check py-2 border-bottom">
+                        <input class="form-check-input" type="radio" name="method" id="bank_transfer" value="bank_transfer" checked required>
+                        <label class="form-check-label" for="bank_transfer">
+                          <span class="payment-icon"><i class="bi bi-bank me-2"></i></span>Bank Transfer
+                        </label>
+                      </div>
+                      <div class="form-check py-2 border-bottom">
+                        <input class="form-check-input" type="radio" name="method" id="cc" value="cc" required>
+                        <label class="form-check-label" for="cc">
+                          <span class="payment-icon"><i class="bi bi-credit-card me-2"></i></span>Credit Card (Dummy)
+                        </label>
+                      </div>
+                      <div class="form-check py-2 border-bottom">
+                        <input class="form-check-input" type="radio" name="method" id="paypal" value="paypal" required>
+                        <label class="form-check-label" for="paypal">
+                          <span class="payment-icon"><i class="bi bi-paypal me-2"></i></span>PayPal (Dummy)
+                        </label>
+                      </div>
+                      <div class="form-check py-2">
+                        <input class="form-check-input" type="radio" name="method" id="qris" value="qris" required>
+                        <label class="form-check-label" for="qris">
+                          <span class="payment-icon"><i class="bi bi-qr-code me-2"></i></span>QRIS (Dummy)
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                      <label for="transaction_id" class="form-label">Transaction ID (Optional)</label>
+                      <input type="text" name="transaction_id" class="form-control" id="transaction_id" placeholder="Enter transaction reference if applicable">
+                    </div>
+
+                    <button type="submit" class="btn btn-accent w-100 py-2">Confirm Payment</button>
+                  </form>
+
+                <% } else { %>
+                  <p class="text-center text-muted py-5">No order details found for payment. Please go to your <a href="/carts" class="btn btn-link p-0">cart</a> to proceed.</p>
+                <% } %>
+              </div> <%# End section-content %>
+            </div> <%# End checkout-section %>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="order-summary p-4 bg-white rounded shadow-sm" data-aos="fade-left" data-aos-delay="200"> <%# Changed to order-summary for consistency %>
+            <h4 class="mb-3">Payment Notes</h4>
+            <p>Please complete your payment within <strong>24 hours</strong> to ensure your order is processed. Once payment is confirmed, your order status will be updated.</p>
+            <p>For bank transfers, please include your Order ID in the transfer notes.</p>
+            <p class="mt-3">Thank you for shopping with Stay Awake Coffee!</p>
+          </div>
+          <div class="payment-methods mt-4 p-3 bg-white rounded shadow-sm text-center">
+            <p class="payment-title fw-bold mb-3">We Accept</p>
+            <div class="payment-icons fs-3 d-flex justify-content-around align-items-center gap-3">
+              <i class="bi bi-credit-card-2-front"></i>
+              <i class="bi bi-paypal"></i>
+              <i class="bi bi-wallet2"></i>
+              <i class="bi bi-apple"></i>
+              <i class="bi bi-google"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section></main>
+
+<%- include('partials/footer') %>
+
+<a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+<div id="preloader"></div>
+
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/php-email-form/validate.js"></script>
+<script src="/assets/vendor/swiper/swiper-bundle.min.js"></script>
+<script src="/assets/vendor/aos/aos.js"></script>
+<script src="/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
+<script src="/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+<script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
+<script src="/assets/vendor/drift-zoom/Drift.min.js"></script>
+<script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+
+<script src="/assets/js/main.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const paymentForm = document.getElementById('paymentForm');
+
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const order_id = paymentForm.querySelector('input[name="order_id"]').value;
+            const amount_paid = parseFloat(paymentForm.querySelector('input[name="amount_paid"]').value);
+            const method = paymentForm.querySelector('input[name="method"]:checked').value;
+            const transaction_id = document.getElementById('transaction_id').value;
+            const status = 'paid';
+
+            try {
+                const response = await fetch('/payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        order_id,
+                        method,
+                        status,
+                        transaction_id,
+                        amount_paid,
+                        paid_at: new Date().toISOString()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    window.showToast(data.message || 'Payment processed successfully!', 'success', 1500, () => {
+                        if (data.paymentId) {
+                            window.location.href = `/payment/${data.paymentId}`;
+                        } else {
+                            window.showToast('Payment processed, but payment ID was not returned for redirect.', 'warning');
+                            window.location.href = '/users/account#wallet';
+                        }
+                    });
+                } else {
+                    window.showToast('Payment failed: ' + (data.error || data.message || 'An error occurred.'), 'error');
+                }
+            } catch (error) {
+                console.error('Error submitting payment:', error);
+                window.showToast('A network or server error occurred during payment.', 'error');
+            }
+        });
+    }
+});
+</script>
+
+</body>
+</html>

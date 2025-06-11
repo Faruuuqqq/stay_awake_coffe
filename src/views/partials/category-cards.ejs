@@ -1,0 +1,74 @@
+<%# File: views/partials/category-cards.ejs %>
+
+<section id="category-cards" class="category-cards section">
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+    <div class="category-slider swiper init-swiper">
+      <%# Konfigurasi Swiper untuk slider kategori %>
+      <script type="application/json" class="swiper-config">
+        {
+          "loop": true, <%# Loop agar slider terus berputar %>
+          "speed": 600,
+          "autoplay": {
+            "delay": 5000,
+            "disableOnInteraction": false
+          },
+          "slidesPerView": "auto",
+          "pagination": {
+            "el": ".swiper-pagination",
+            "type": "bullets",
+            "clickable": true
+          },
+          "navigation": {
+            "nextEl": ".swiper-button-next",
+            "prevEl": ".swiper-button-prev"
+          },
+          "breakpoints": {
+            "320": {
+              "slidesPerView": 1,
+              "spaceBetween": 10
+            },
+            "576": {
+              "slidesPerView": 2,
+              "spaceBetween": 20
+            },
+            "768": {
+              "slidesPerView": 3,
+              "spaceBetween": 20
+            },
+            "992": {
+              "slidesPerView": 4,
+              "spaceBetween": 30
+            }
+          }
+        }
+      </script>
+      <div class="swiper-wrapper">
+
+        <% if (categories && categories.length > 0) { %>
+          <% categories.forEach((category, index) => { %>
+            <div class="swiper-slide">
+              <div class="category-card" data-aos="fade-up" data-aos-delay="<%= 100 + index * 100 %>">
+                <div class="category-image">
+
+                  <img src="<%= category.image %>" alt="Category <%= category.name %>" class="img-fluid" />
+                </div>
+                <h3 class="category-title"><%= category.name %></h3>
+                <%# FIX: Menggunakan category.productCount (dari backend) atau default 0 %>
+                <p class="category-count"><%= category.productCount !== undefined ? category.productCount : 0 %> Products</p>
+                <%# FIX: Menggunakan category.category_id (sesuai nama kolom DB) %>
+                <a href="/categories/<%= category.category_id %>" class="stretched-link"></a>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="swiper-slide text-center p-5">
+            <p>No categories found.</p>
+          </div>
+        <% } %>
+
+      </div>
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+    </div>
+  </div>
+</section>

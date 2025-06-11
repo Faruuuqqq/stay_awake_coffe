@@ -1,0 +1,140 @@
+<%# File: views/partials/footer.ejs %>
+
+<footer id="footer" class="footer">
+  <div class="footer-main">
+    <div class="container">
+      <div class="row gy-4">
+        <div class="col-lg-3 col-md-6 col-sm-12">
+          <div class="footer-widget footer-about">
+            <a href="/" class="logo"> <%# Link to home route %>
+              <span class="sitename">Stay Awake</span>
+            </a>
+            <p>Stay Awake is a store that sells high-quality coffee beans and exclusive merchandise. We connect local Indonesian coffee SMEs with digital consumers, offering the best coffee experience.</p> <%# Updated description %>
+            <div class="footer-contact mt-4">
+              <div class="contact-item">
+                <i class="bi bi-geo-alt"></i>
+                <span>Sumedang Regency, West Java, Indonesia</span> <%# Updated address %>
+              </div>
+              <div class="contact-item">
+                <i class="bi bi-telephone"></i>
+                <span>+62 (555) 123-4567</span>
+              </div>
+              <div class="contact-item">
+                <i class="bi bi-envelope"></i>
+                <span>StayAwake@gmail.com</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-6 col-sm-6">
+          <div class="footer-widget">
+            <h4>Shop</h4>
+            <ul class="footer-links">
+              <li><a href="/products">All Products</a></li> <%# Link to all products %>
+              <li><a href="/products?category=coffee-beans">Coffee Beans</a></li> <%# Example coffee category link %>
+              <li><a href="/products?category=ground-coffee">Ground Coffee</a></li> <%# Example coffee category link %>
+              <li><a href="/products?category=merchandise">Merchandise</a></li> <%# Example merchandise category link %>
+              <li><a href="/products?sale=true">Sale Items</a></li> <%# Link to sale (if implemented) %>
+              <li><a href="/categories">Browse Categories</a></li> <%# Link to general categories page %>
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-6 col-sm-6">
+          <div class="footer-widget">
+            <h4>Support</h4>
+            <ul class="footer-links">
+              <li><a href="/contact">Help Center</a></li> <%# Link to contact page %>
+              <li><a href="/users/account">Order Status</a></li> <%# Link to user account page %>
+              <li><a href="/shipping-info">Shipping Info</a></li> <%# Placeholder for shipping info page %>
+              <li><a href="/return-policy">Returns &amp; Exchanges</a></li> <%# Placeholder for returns policy page %>
+              <li><a href="/faq">FAQ</a></li> <%# Link to FAQ page %>
+              <li><a href="/contact">Contact Us</a></li> <%# Link to contact page %>
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-6 col-sm-6">
+          <div class="footer-widget">
+            <h4>Company</h4>
+            <ul class="footer-links">
+              <li><a href="/about">About Us</a></li> <%# Link to about page %>
+              <li><a href="/blog">Blog</a></li> <%# Link to blog page %>
+              <li><a href="/privacy">Privacy Policy</a></li> <%# Link to privacy policy page %>
+              <li><a href="/terms">Terms of Service</a></li> <%# Link to terms of service page %>
+              <%# Career, Press, Affiliates, Responsibility, Investors dihilangkan/diasumsikan tidak relevan untuk saat ini %>
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 col-sm-6">
+          <div class="footer-widget">
+            <h4>Download Our App</h4>
+            <p>Shop on the go with our mobile app</p>
+            <div class="app-buttons">
+              <a href="#" class="app-btn"> <%# Placeholder for app store links %>
+                <i class="bi bi-apple"></i>
+                <span>App Store</span>
+              </a>
+              <a href="#" class="app-btn">
+                <i class="bi bi-google-play"></i>
+                <span>Google Play</span>
+              </a>
+            </div>
+            <div class="social-links mt-4">
+              <h5>Follow Us</h5>
+              <div class="social-icons">
+                <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                <a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                <a href="#" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+                <a href="#" aria-label="TikTok"><i class="bi bi-tiktok"></i></a>
+                <a href="#" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="container">
+
+      <div class="payment-methods d-flex align-items-center justify-content-center">
+        <span>We Accept:</span>
+        <div class="payment-icons">
+          <i class="bi bi-credit-card" aria-label="Credit Card"></i>
+          <i class="bi bi-paypal" aria-label="PayPal"></i>
+          <i class="bi bi-apple" aria-label="Apple Pay"></i>
+          <i class="bi bi-google" aria-label="Google Pay"></i>
+          <i class="bi bi-shop" aria-label="Shop Pay"></i>
+          <i class="bi bi-cash" aria-label="Cash on Delivery"></i>
+        </div>
+      </div>
+
+      <div class="legal-links">
+        <a href="/terms">Terms of Service</a>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/terms">Cookies Settings</a> <%# Link ke Terms of Service, bisa diganti jika ada halaman khusus cookies %>
+      </div>
+
+      <div class="copyright text-center">
+        <p>© <span>Copyright</span> <strong class="sitename">Stay Awake</strong>. All Rights Reserved.</p>
+        <%# Menambahkan tahun dinamis %>
+        <p>Current Year: <span id="current-year"></span></p>
+      </div>
+
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Script untuk mendapatkan tahun saat ini secara dinamis untuk copyright
+  document.addEventListener('DOMContentLoaded', function() {
+    const currentYearSpan = document.getElementById('current-year');
+    if (currentYearSpan) {
+      currentYearSpan.textContent = new Date().getFullYear();
+    }
+  });
+</script>

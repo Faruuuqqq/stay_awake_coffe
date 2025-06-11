@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Category Page</title>
+  <meta name="description" content="Browse our wide selection of categories product.">
+  <meta name="keywords" content=", products, shop, online store">
+
+  <link href="/assets/img/favicon.png" rel="icon">
+  <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
+  <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+  <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+  <link href="/assets/vendor/aos/aos.css" rel="stylesheet">
+  <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+  <link href="/assets/vendor/drift-zoom/drift-basic.css" rel="stylesheet">
+
+  <link href="/assets/css/main.css" rel="stylesheet">
+  <link href="/assets/css/custom-toast.css" rel="stylesheet">
+</head>
+<body>
+
+  <%- include('partials/header') %>
+
+  <main class="main">
+
+    <div class="page-title light-background">
+      <div class="container d-lg-flex justify-content-between align-items-center">
+        <h1 class="mb-2 mb-lg-0"><%= categories.name || 'Category' %></h1>
+        <nav class="breadcrumbs">
+          <ol>
+            <li><a href="/">Home</a></li>
+            <li class="current"><%= categories.name || 'Category' %></li>
+          </ol>
+        </nav>
+      </div>
+    </div><div class="container">
+      <div class="row">
+
+        <div class="col-lg-4 sidebar">
+          <div class="widgets-container">
+
+            <div class="product-categories-widget widget-item">
+              <h3 class="widget-title">Categories</h3>
+              <ul class="category-tree list-unstyled mb-0">
+                <% if (categories && categories.length > 0) { %>
+                  <% categories.forEach(category => { %>
+                    <li class="category-item">
+                      <div class="d-flex justify-content-between align-items-center category-header <%= category.subcategories ? 'collapsed' : '' %>"
+                           <% if (category.subcategories) { %>
+                             data-bs-toggle="collapse" data-bs-target="#categories-<%= category.id %>-subcategories" aria-expanded="false" aria-controls="categories-<%= category.id %>-subcategories"
+                           <% } %>
+                      >
+                        <a href="<%= category.link || 'javascript:void(0)' %>" class="category-link"><%= category.name %></a>
+                        <% if (category.subcategories) { %>
+                          <span class="category-toggle">
+                            <i class="bi bi-chevron-down"></i>
+                            <i class="bi bi-chevron-up"></i>
+                          </span>
+                        <% } %>
+                      </div>
+                      <% if (category.subcategories && category.subcategories.length > 0) { %>
+                        <ul id="categories-<%= category.id %>-subcategories" class="subcategory-list list-unstyled collapse ps-3 mt-2">
+                          <% category.subcategories.forEach(subcategory => { %>
+                            <li><a href="<%= subcategory.link %>" class="subcategory-link"><%= subcategory.name %></a></li>
+                          <% }); %>
+                        </ul>
+                      <% } %>
+                    </li>
+                  <% }); %>
+                <% } else { %>
+                  <p>No categories available.</p>
+                <% } %>
+              </ul>
+            </div><div class="pricing-range-widget widget-item">
+              <h3 class="widget-title">Price Range</h3>
+              <div class="price-range-container">
+                <div class="current-range mb-3">
+                  <span class="min-price">$0</span>
+                  <span class="max-price float-end">$1000</span>
+                </div>
+
+                <div class="range-slider">
+                  <div class="slider-track"></div>
+                  <div class="slider-progress"></div>
+                  <input type="range" class="min-range" min="0" max="1000" value="0" step="10">
+                  <input type="range" class="max-range" min="0" max="1000" value="500" step="10">
+                </div>
+
+                <div class="price-inputs mt-3">
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <div class="input-group input-group-sm">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control min-price-input" placeholder="Min" min="0" max="1000" value="0" step="10">
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="input-group input-group-sm">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control max-price-input" placeholder="Max" min="0" max="1000" value="500" step="10">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="filter-actions mt-3">
+                  <button type="button" class="btn btn-sm btn-primary w-100">Apply Filter</button>
+                </div>
+              </div>
+            </div><div class="brand-filter-widget widget-item">
+              <h3 class="widget-title">Filter by Brand</h3>
+              <div class="brand-filter-content">
+                <div class="brand-search">
+                  <input type="text" class="form-control" placeholder="Search brands...">
+                  <i class="bi bi-search"></i>
+                </div>
+
+                <div class="brand-actions">
+                  <button class="btn btn-sm btn-outline-primary">Apply Filter</button>
+                  <button class="btn btn-sm btn-link">Clear All</button>
+                </div>
+              </div>
+            </div><div class="color-filter-widget widget-item">
+              <h3 class="widget-title">Filter by Color</h3>
+              <div class="color-filter-content">
+                <div class="color-options">
+                  <div class="form-check color-option">
+                    <input class="form-check-input" type="checkbox" value="black" id="color-black">
+                    <label class="form-check-label" for="color-black">
+                      <span class="color-swatch" style="background-color: #000000;" title="Black"></span>
+                    </label>
+                  </div>
+                  <div class="form-check color-option">
+                    <input class="form-check-input" type="checkbox" value="white" id="color-white">
+                    <label class="form-check-label" for="color-white">
+                      <span class="color-swatch" style="background-color: #ffffff; border: 1px solid #ccc;" title="White"></span>
+                    </label>
+                  </div>
+                  <div class="form-check color-option">
+                    <input class="form-check-input" type="checkbox" value="red" id="color-red">
+                    <label class="form-check-label" for="color-red">
+                      <span class="color-swatch" style="background-color: #e74c3c;" title="Red"></span>
+                    </label>
+                  </div>
+                  <div class="form-check color-option">
+                    <input class="form-check-input" type="checkbox" value="blue" id="color-blue">
+                    <label class="form-check-label" for="color-blue">
+                      <span class="color-swatch" style="background-color: #3498db;" title="Blue"></span>
+                    </label>
+                  </div>
+                  <div class="form-check color-option">
+                    <input class="form-check-input" type="checkbox" value="green" id="color-green">
+                    <label class="form-check-label" for="color-green">
+                      <span class="color-swatch" style="background-color: #2ecc71;" title="Green"></span>
+                    </label>
+                  </div>
+                  <div class="form-check color-option">
+                    <input class="form-check-input" type="checkbox" value="yellow" id="color-yellow">
+                    <label class="form-check-label" for="color-yellow">
+                      <span class="color-swatch" style="background-color: #f1c40f;" title="Yellow"></span>
+                    </label>
+                  </div>
+                  <div class="form-check color-option">
+                    <input class="form-check-input" type="checkbox" value="purple" id="color-purple">
+                    <label class="form-check-label" for="color-purple">
+                      <span class="color-swatch" style="background-color: #9b59b6;" title="Purple"></span>
+                    </label>
+                  </div>
+                  <div class="form-check color-option">
+                    <input class="form-check-input" type="checkbox" value="orange" id="color-orange">
+                    <label class="form-check-label" for="color-orange">
+                      <span class="color-swatch" style="background-color: #e67e22;" title="Orange"></span>
+                    </label>
+                  </div>
+                  <div class="form-check color-option">
+                    <input class="form-check-input" type="checkbox" value="pink" id="color-pink">
+                    <label class="form-check-label" for="color-pink">
+                      <span class="color-swatch" style="background-color: #fd79a8;" title="Pink"></span>
+                    </label>
+                  </div>
+                  <div class="form-check color-option">
+                    <input class="form-check-input" type="checkbox" value="brown" id="color-brown">
+                    <label class="form-check-label" for="color-brown">
+                      <span class="color-swatch" style="background-color: #795548;" title="Brown"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="filter-actions mt-3">
+                  <button type="button" class="btn btn-sm btn-outline-secondary">Clear All</button>
+                  <button type="button" class="btn btn-sm btn-primary">Apply Filter</button>
+                </div>
+              </div>
+            </div></div>
+        </div>
+
+        <div class="col-lg-8">
+
+          <section id="category-header" class="category-header section">
+            <div class="container" data-aos="fade-up">
+
+              <div class="filter-container mb-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="row g-3">
+                  <div class="col-12 col-md-6 col-lg-4">
+                    <div class="filter-item search-form">
+                      <label for="productSearch" class="form-label">Search Products</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" id="productSearch" placeholder="Search for products..." aria-label="Search for products">
+                        <button class="btn search-btn" type="button">
+                          <i class="bi bi-search"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-md-6 col-lg-2">
+                    <div class="filter-item">
+                      <label for="priceRange" class="form-label">Price Range</label>
+                      <select class="form-select" id="priceRange">
+                        <option value="">All Prices</option>
+                        <option value="under-25">Under $25</option>
+                        <option value="25-50">$25 to $50</option>
+                        <option value="50-100">$50 to $100</option>
+                        <option value="100-200">$100 to $200</option>
+                        <option value="200-above">$200 &amp; Above</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-md-6 col-lg-2">
+                    <div class="filter-item">
+                      <label for="sortBy" class="form-label">Sort By</label>
+                      <select class="form-select" id="sortBy">
+                        <option value="featured">Featured</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                        <option value="rating">Customer Rating</option>
+                        <option value="newest">Newest Arrivals</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-md-6 col-lg-4">
+                    <div class="filter-item">
+                      <label class="form-label">View</label>
+                      <div class="d-flex align-items-center">
+                        <div class="view-options me-3">
+                          <button type="button" class="btn view-btn active" data-view="grid" aria-label="Grid view">
+                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                          </button>
+                          <button type="button" class="btn view-btn" data-view="list" aria-label="List view">
+                            <i class="bi bi-list-ul"></i>
+                          </button>
+                        </div>
+                        <div class="items-per-page">
+                          <select class="form-select" id="itemsPerPage" aria-label="Items per page">
+                            <option value="12">12 Items</option>
+                            <option value="24">24 Items</option>
+                            <option value="36">36 Items</option>
+                            <option value="48">48 Items</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row mt-3">
+                  <div class="col-12" data-aos="fade-up" data-aos-delay="200">
+                    <div class="active-filters">
+                      <span class="active-filter-label">Active Filters:</span>
+                      <div class="filter-tags">
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section><section id="category-product-list" class="category-product-list section">
+            <div class="container" data-aos="fade-up" data-aos-delay="100">
+              <div class="row gy-4">
+                <% if (products && products.length > 0) { %>
+                  <% products.forEach(product => { %>
+                    <div class="col-lg-6">
+                      <div class="product-box">
+                        <div class="product-thumb">
+                          <% if (product.label) { %>
+                            <span class="product-label <%= product.label.toLowerCase().replace(' ', '-') === 'sale' ? 'product-label-sale' : (product.label.toLowerCase().replace(' ', '-') === 'sold-out' ? 'product-label-sold' : (product.label.toLowerCase().replace(' ', '-') === 'hot' ? 'product-label-hot' : '')) %>">
+                              <%= product.label %>
+                            </span>
+                          <% } %>
+                          <img src="<%= product.image %>" alt="<%= product.name %> Image" class="main-img" loading="lazy">
+                          <div class="product-overlay">
+                            <div class="product-quick-actions">
+                              <button type="button" class="quick-action-btn">
+                                <i class="bi bi-heart"></i>
+                              </button>
+                              <button type="button" class="quick-action-btn">
+                                <i class="bi bi-arrow-repeat"></i>
+                              </button>
+                              <button type="button" class="quick-action-btn">
+                                <i class="bi bi-eye"></i>
+                              </button>
+                            </div>
+                            <div class="add-to-cart-container">
+                              <button type="button" class="add-to-cart-btn <%= product.label === 'Sold Out' ? 'disabled' : '' %>">
+                                <%= product.label === 'Sold Out' ? 'Sold Out' : 'Add to Cart' %>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="product-content">
+                          <div class="product-details">
+                            <h3 class="product-title"><a href="<%= product.link %>"><%= product.name %></a></h3>
+                            <div class="product-price">
+                              <% if (product.originalPrice) { %>
+                                <span class="original">$<%= product.price.toFixed(1) %></span>
+                              <% } %>
+                              <span class="sale">$<%= product.price %></span>
+                            </div>
+                          </div>
+                    <div class="product-rating-container">
+                      <div class="rating-stars">
+                        <%# Randomized dummy rating %>
+                        <% const randomRating = (Math.random() * (5 - 3) + 3).toFixed(1); %> <%# Random between 3.0 and 5.0 %>
+                        <% const displayRating = parseFloat(randomRating); %>
+
+                        <% for(let i=0; i < Math.floor(displayRating); i++) { %>
+                          <i class="bi bi-star-fill"></i>
+                        <% } %>
+                        <% if(displayRating % 1 >= 0.5) { %>
+                          <i class="bi bi-star-half"></i>
+                        <% } %>
+                        <% for(let i=0; i < 5 - Math.ceil(displayRating); i++) { %>
+                          <i class="bi bi-star"></i>
+                        <% } %>
+                      </div>
+                      <span class="rating-number"><%= displayRating %></span>
+                    </div>
+                        </div>
+                      </div>
+                    </div>
+                  <% }); %>
+                <% } else { %>
+                  <div class="col-12">
+                    <p>No products found in this category.</p>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+      </div>
+    </div>
+
+  </main>
+
+  <%- include('partials/footer') %>
+
+</body>
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <div id="preloader"></div>
+
+  <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/vendor/php-email-form/validate.js"></script>
+  <script src="/assets/vendor/swiper/swiper-bundle.min.js"></script>
+  <script src="/assets/vendor/aos/aos.js"></script>
+  <script src="/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
+  <script src="/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+  <script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
+  <script src="/assets/vendor/drift-zoom/Drift.min.js"></script>
+  <script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+
+  <script src="/assets/js/main.js"></script>
+</html>

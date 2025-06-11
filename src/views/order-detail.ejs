@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Detail Page</title>
+  <meta name="description" content="Order details for your purchase.">
+  <meta name="keywords" content="order, detail, purchase, coffee">
+
+  <link href="/assets/img/favicon.png" rel="icon">
+  <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
+  <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+  <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+  <link href="/assets/vendor/aos/aos.css" rel="stylesheet">
+  <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+  <link href="/assets/vendor/drift-zoom/drift-basic.css" rel="stylesheet">
+
+  <link href="/assets/css/main.css" rel="stylesheet">
+  <link href="/assets/css/custom-toast.css" rel="stylesheet">
+</head>
+<body class="index-page">
+
+<%- include('partials/header') %>
+
+<main class="main">
+
+  <div class="page-title light-background">
+    <div class="container d-lg-flex justify-content-between align-items-center">
+      <h1 class="mb-2 mb-lg-0">Order Details</h1>
+      <nav class="breadcrumbs">
+        <ol>
+          <li><a href="/">Home</a></li>
+          <li><a href="/users/account#orders">My Orders</a></li>
+          <li class="current">Order #<%= order.order_id %></li>
+        </ol>
+      </nav>
+    </div>
+  </div><section id="order-details" class="order-details section">
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+      <% if (error) { %>
+        <div class="alert alert-danger" role="alert">
+          <%= error %>
+        </div>
+      <% } %>
+      <% if (success) { %>
+        <div class="alert alert-success" role="alert">
+          <%= success %>
+        </div>
+      <% } %>
+
+      <% if (order) { %>
+        <div class="row g-4">
+          <div class="col-lg-8">
+            <div class="order-summary-card p-4 bg-white rounded shadow-sm">
+              <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                <h4 class="mb-0 text-heading">Order #<%= order.order_id %></h4>
+                <span class="badge bg-<%= order.status.toLowerCase() === 'completed' ? 'success' : (order.status.toLowerCase() === 'pending' ? 'warning' : 'info') %> fs-6 text-capitalize"><%= order.status %></span>
+              </div>
+
+              <div class="row mb-4">
+                <div class="col-md-6 mb-3 mb-md-0">
+                  <h5 class="text-default">Order Information</h5>
+                  <p class="mb-1"><strong>Order Date:</strong> <%= new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %></p>
+                  <p class="mb-1"><strong>Total Paid:</strong> $<%= parseFloat(order.total_price).toFixed(2) %></p>
+                 
+                  <p class="mb-0 text-muted small">Payment Method: <i>(Not available)</i></p>
+                  <p class="mb-0 text-muted small">Transaction ID: <i>(Not available)</i></p>
+                </div>
+                <div class="col-md-6">
+                  <h5 class="text-default">Shipping Address</h5>
+          
+                  <p class="mb-1">Address ID: <%= order.address_id %></p>
+                  <p class="mb-1 text-muted"><i>(Full address details not available)</i></p>
+                  <p class="mb-0 text-muted small"><i>(Phone number not available)</i></p>
+                 
+                  <p class="mb-1"><%= order.shipping_address_street %>, <%= order.shipping_address_city %></p>
+                  <p class="mb-0"><%= order.shipping_address_postal_code %></p>
+                </div>
+              </div>
+
+              <h5 class="mb-3 text-default">Order Items</h5>
+              <div class="order-items-list">
+                <% if (order.items && order.items.length > 0) { %>
+                  <ul class="list-group list-group-flush">
+                    <% order.items.forEach(item => { %>
+                      <li class="list-group-item d-flex align-items-center py-3">
+                        <img src="<%= item.image %>" alt="<%= item.name %>" class="img-fluid rounded me-3" style="width: 70px; height: 70px; object-fit: cover;">
+                        <div class="flex-grow-1">
+                          <h6 class="mb-1"><a href="/products/<%= item.product_id %>" class="text-default"><%= item.name %></a></h6>
+                          <p class="mb-0 text-muted small">Quantity: <%= item.quantity %></p>
+                        </div>
+                        <span class="fw-bold text-default">$<%= parseFloat(item.total_price).toFixed(2) %></span>
+                      </li>
+                    <% }) %>
+                  </ul>
+                <% } else { %>
+                  <p class="text-center text-muted py-3">No items found for this order.</p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="order-summary-box p-4 bg-white rounded shadow-sm">
+              <h4 class="mb-3 text-heading">Order Summary</h4>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Subtotal</span>
+                <span>$<%= parseFloat(order.total_price).toFixed(2) %></span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Shipping</span>
+                <span>$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                <span>Tax</span>
+                <span>$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between fw-bold text-heading fs-5">
+                <span>Grand Total</span>
+                <span>$<%= parseFloat(order.total_price).toFixed(2) %></span>
+              </div>
+
+              <h5 class="mt-4 text-heading">Order Actions</h5>
+              <div class="d-grid gap-2">
+                <% if (order.status.toLowerCase() === 'pending') { %>
+                  <a href="/payment?orderId=<%= order.order_id %>" class="btn btn-accent"><i class="bi bi-wallet2 me-2"></i> Complete Payment</a>
+                <% } %>
+                <button class="btn btn-outline-default"><i class="bi bi-download me-2"></i> Download Invoice</button>
+                <a href="/users/account#orders" class="btn btn-outline-default mt-2"><i class="bi bi-arrow-left me-2"></i> Back to My Orders</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } else { %>
+        <p class="text-center text-muted py-5">Order not found.</p>
+      <% } %>
+    </div>
+  </section></main>
+
+<%- include('partials/footer') %>
+
+<a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+<div id="preloader"></div>
+
+<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/vendor/php-email-form/validate.js"></script>
+<script src="/assets/vendor/swiper/swiper-bundle.min.js"></script>
+<script src="/assets/vendor/aos/aos.js"></script>
+<script src="/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
+<script src="/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+<script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
+<script src="/assets/vendor/drift-zoom/Drift.min.js"></script>
+<script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+
+<script src="/assets/js/main.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Ambil pesan dari variabel EJS
+  const successMsg = <%- JSON.stringify(typeof success !== 'undefined' ? success : '') %>;
+  const errorMsg = <%- JSON.stringify(typeof error !== 'undefined' ? error : '') %>;
+
+  // Tampilkan notifikasi Toast jika ada pesan sukses atau error
+  if (typeof window.showToast === 'function') {
+    if (successMsg) {
+      window.showToast(successMsg, 'success');
+    } else if (errorMsg) {
+      window.showToast(errorMsg, 'error');
+    }
+  } else {
+    // Fallback ke alert jika fungsi showToast belum tersedia (seharusnya tidak terjadi jika main.js benar)
+    if (successMsg) {
+      alert(successMsg);
+    } else if (errorMsg) {
+      alert(errorMsg);
+    }
+  }
+
+  // --- Tambahan: Logika Interaktif di order-detail.ejs jika ada ---
+  // Contoh: Jika ada tombol "Download Invoice" dan Anda ingin menampilkan Toast saat diklik
+  // const downloadInvoiceBtn = document.getElementById('downloadInvoiceBtn');
+  // if (downloadInvoiceBtn) {
+  //   downloadInvoiceBtn.addEventListener('click', () => {
+  //     window.showToast('Downloading invoice...', 'info');
+  //     // Tambahkan logika download di sini
+  //   });
+  // }
+
+  // Contoh: Jika ada tombol "Cancel Order"
+  // const cancelOrderBtn = document.getElementById('cancelOrderBtn');
+  // if (cancelOrderBtn) {
+  //   cancelOrderBtn.addEventListener('click', async () => {
+  //     if (confirm('Are you sure you want to cancel this order?')) {
+  //       try {
+  //         const orderId = "<%= order.order_id %>";
+  //         const response = await fetch(`/orders/${orderId}`, {
+  //           method: 'PUT',
+  //           headers: { 'Content-Type': 'application/json' },
+  //           body: JSON.stringify({ status: 'cancelled' })
+  //         });
+  //         const data = await response.json();
+  //         if (response.ok) {
+  //           window.showToast(data.message || 'Order cancelled successfully!', 'success', 1500, () => {
+  //             window.location.reload();
+  //           });
+  //         } else {
+  //           window.showToast('Failed to cancel order: ' + (data.error || data.message || 'An error occurred.'), 'error');
+  //         }
+  //       } catch (e) {
+  //         console.error('Error cancelling order:', e);
+  //         window.showToast('Network error while cancelling order.', 'error');
+  //       }
+  //     }
+  //   });
+  // }
+});
+</script>
+</body>
+</html>
