@@ -1,0 +1,102 @@
+/* File: public/assets/css/custom-toast.css */
+
+/* Wrapper (Toast Container) */
+.toast-container-custom {
+    /* Posisi ditentukan di HTML dengan Bootstrap classes: bottom-0 end-0 p-3 */
+    width: 380px; /* Lebar sesuai contoh */
+}
+
+/* Base Toast Style */
+.toast-custom {
+    width: 100%;
+    height: 80px;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 7px;
+    display: grid;
+    grid-template-columns: 1.3fr 6fr 0.5fr;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+    opacity: 0; /* Awalnya sembunyi */
+    visibility: hidden;
+    transform: translateY(20px); /* Efek slide dari bawah */
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+/* Show state */
+.toast-custom.show-custom {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* Hide state */
+.toast-custom.hide-custom {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px); /* Efek slide ke bawah saat sembunyi */
+}
+
+/* Container-1 (Icon) */
+.container-1-custom {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.container-1-custom i {
+    font-size: 35px; /* Ukuran ikon */
+}
+
+/* Container-2 (Title & Body) */
+.container-2-custom {
+    padding-left: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.toast-title-custom {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+.toast-body-custom {
+    font-size: 15px;
+    margin-bottom: 0;
+}
+
+/* Close Button */
+.close-btn-custom {
+    background-color: transparent;
+    border: none;
+    font-size: 25px;
+    color: #a0a0a0;
+    cursor: pointer;
+    align-self: flex-start;
+}
+
+/* Type-specific styles */
+.toast-custom.success-custom {
+    border-left: 8px solid #47d764;
+}
+.toast-custom.success-custom .container-1-custom i {
+    color: #47d764;
+}
+
+.toast-custom.error-custom {
+    border-left: 8px solid #ff355b;
+}
+.toast-custom.error-custom .container-1-custom i {
+    color: #ff355b;
+}
+
+.toast-custom.info-custom {
+    border-left: 8px solid #2f86eb;
+}
+.toast-custom.info-custom .container-1-custom i {
+    color: #2f86eb;
+}
+
+.toast-custom.warning-custom {
+    border-left: 8px solid #ffc007;
+}
+.toast-custom.warning-custom .container-1-custom i {
+    color: #ffc007;
+}
