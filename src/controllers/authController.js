@@ -1,13 +1,6 @@
 const jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
-const paymentModel = require('../models/paymentModel');
-const orderModel = require('../models/orderModel');
-const addressModel = require('../models/addressModel');
-const { getCommonRenderData } = require('../utils/renderHelpers'); // Impor helper baru
-
-// CATATAN: crypto dan nodemailer dihapus karena tidak digunakan di kode aktif saat ini.
-// const crypto = require('crypto');
-// const nodemailer = require('nodemailer');
+const { getCommonRenderData } = require('../utils/renderHelpers');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRESIN = process.env.JWT_EXPIRESIN;
@@ -116,7 +109,6 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-
 exports.changePassword = async (req, res) => {
   const userId = req.userId;
   const { email, oldPassword, newPassword } = req.body;
@@ -154,7 +146,6 @@ exports.changePassword = async (req, res) => {
     return res.render('forgot-password', { ...commonDataForForgotPass, error: error.message });
   }
 };
-
 
 exports.getAccountPage = async (req, res) => {
   const userId = req.userId;

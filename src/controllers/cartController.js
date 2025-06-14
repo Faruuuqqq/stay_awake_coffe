@@ -1,6 +1,5 @@
 const cartModel = require('../models/cartModel');
 const productModel = require('../models/productModel');
-const categetoryModel = require('../models/categoryModel');
 
 exports.getCart = async (req, res) => {
   const userId = req.userId;

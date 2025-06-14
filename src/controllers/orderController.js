@@ -1,11 +1,8 @@
-// controllers/orderController.js
-
 const orderModel = require('../models/orderModel');
 const cartModel = require('../models/cartModel');
 const userModel = require('../models/userModel');
 const addressModel = require('../models/addressModel');
 
-// Fungsi pembantu untuk mendapatkan semua data yang dibutuhkan halaman checkout
 async function getCheckoutPageData(userId, reqBody = {}) {
   let user = null;
   let addresses = [];
@@ -33,7 +30,6 @@ async function getCheckoutPageData(userId, reqBody = {}) {
     success: null,
   };
 }
-
 
 exports.createOrder = async (req, res) => {
   const userId = req.userId;
@@ -75,7 +71,6 @@ exports.createOrder = async (req, res) => {
     const orderItems = items.map((item) => ({
       product_id: item.product_id,
       quantity: item.quantity,
-      // FIX: Hitung total_price untuk item ini
       total_price: item.price * item.quantity, // Kolom ini akan masuk ke order_items.total_price
     }));
     await orderModel.createOrderItems(orderId, orderItems);
@@ -109,7 +104,6 @@ exports.getCheckoutPage = async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 };
-
 
 exports.getOrderById = async (req, res) => {
   const orderId = req.params.id;
