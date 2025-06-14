@@ -6,42 +6,46 @@ services:
       context: .
       dockerfile: dockerFile
     ports:
-      -"3000:3000"
+      - "3000:3000"
     volumes:
       - .:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - JWT_SECRET: jwt_secret_faruq
-      - JWT_EXPIRESIN: 7d
-      - DB_HOST: localhost
-      - DB_USER: root
-      - DB_PASSWORD:
-      - DB_NAME: stay_awake_db
+      - JWT_SECRET=your_jwt_secret_key
+      - JWT_EXPIRESIN=7d
+      - DB_HOST=db
+      - DB_USER=stayawake_user 
+      - DB_PASSWORD=your_app_password
+      - DB_NAME=stay_awake_db
     depends_on:
       - db
-    healthcheck: # Tambahkan healthcheck untuk aplikasi Anda agar db bisa 'wait'
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"] # Asumsi ada rute / yang merespons
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+
+
   db:
     image: mysql:8.4.2
     ports:
-      -"3306:3306"
+      - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD:
-      MYSQL_DATABASE: stay_awake_db
-      MYSQL_USER: root
-      MYSQL_PASSWORD: 
+      - MYSQL_ROOT_PASSWORD=your_root_password_for_docker # FIX: Password untuk root di DALAM Docker
+      - MYSQL_DATABASE=stay_awake_db
+      - MYSQL_USER=stayawake_user # FIX: User aplikasi yang akan dibuat oleh MySQL Entrypoint
+      - MYSQL_PASSWORD=your_app_password # FIX: Password untuk user aplikasi ini
     volumes:
       - db_data:/var/lib/mysql
-      - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/1.sql # Opsional: Untuk inisialisasi skema saat pertama kali
-      - ./backend/database/dummyData.sql:/docker-entrypoint-initdb.d/2.sql # Opsional: Untuk data dummy
+      - ./backend/database/schemaBaru.sql:/docker-entrypoint-initdb.d/1.sql
+      - ./backend/database/dummyData.sql:/docker-entrypoint-initdb.d/2.sql
+
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 20s
       retries: 10
+      interval: 10s
 
 volumes:
   db_data: {}
