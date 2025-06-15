@@ -1,104 +1,256 @@
+// src/models/orderModel.js
 const db = require('../config/db');
 
-// buat order baru (dari cart), status default 'pending'
-exports.createOrder = async (userId, addressId, totalPrice ) => {
-  try {
-    const [result] = await db.execute(
-      `INSERT INTO orders (user_id, address_id, total_price) VALUES (?, ?, ?)`,
-      [userId, addressId, totalPrice]
-    );
-    return result.insertId;
-  } catch (error) {
-    throw new Error('Database error: ' + error.message);
-  }
-};
+// Objek Order berisi semua fungsi interaksi database untuk pesanan dan item pesanan
+const Order = {
+    /**
+     * Membuat pesanan baru.
+     * @param {number} userId - ID pengguna yang membuat pesanan.
+     * @param {number} addressId - ID alamat pengiriman.
+     * @param {number} totalPrice - Total harga pesanan.
+     * @returns {Promise<number>} ID pesanan yang baru dibuat.
+     * @throws {Error} Jika terjadi kesalahan database.
+     */
+    create: async (userId, addressId, totalPrice) => {
+        try {
+            const [result] = await db.execute(
+                `INSERT INTO orders (user_id, address_id, total_price, status) VALUES (?, ?, ?, 'pending')`,
+                [userId, addressId, totalPrice]
+            );
+            return result.insertId;
+        } catch (error) {
+            console.error('Error creating order in DB:', error.message);
+            throw new Error('Database error: Failed to create order');
+        }
+    },
 
-// simpan item order (produk, quantity, harga)
-exports.createOrderItems = async (orderId, items) => {
-  try {
-    const queries = items.map(item => {
-      return db.execute(
-        `INSERT INTO order_items (order_id, product_id, quantity, total_price) VALUES (?, ?, ?, ?)`,
-        [orderId, item.product_id, item.quantity, item.total_price]
-      );
-    });
-    await Promise.all(queries);
-  } catch (error) {
-    throw new Error('Database error: ' + error.message);
-  }
-};
+    /**
+     * Menyimpan item-item pesanan ke database.
+     * @param {number} orderId - ID pesanan induk.
+     * @param {Array<Object>} items - Array objek item pesanan ({ product_id, quantity, price, total_price }).
+     * @returns {Promise<void>}
+     * @throws {Error} Jika terjadi kesalahan database.
+     */
+    addItems: async (orderId, items) => { // Mengganti createOrderItems menjadi addItems
+        try {
+            // Memastikan items adalah array dan memiliki data
+            if (!Array.isArray(items) || items.length === 0) {
+                return; // Tidak melakukan apa-apa jika tidak ada item
+            }
 
-// ambil semua order berdasarkan order id (untuk detail satu order)
-exports.getOrderById = async (orderId) => {
-  try {
-    const [orders] = await db.execute(
-      `SELECT o.*,
-              a.phone AS address_phone, a.address AS shipping_address_street, a.city AS shipping_address_city, a.postal_code AS shipping_address_postal_code,
-              p.method AS payment_method, p.status AS payment_status, p.transaction_id AS payment_transaction_id, p.amount_paid AS payment_amount_paid, p.paid_at AS payment_paid_at
-       FROM orders o
-       JOIN addresses a ON o.address_id = a.address_id
-       LEFT JOIN payments p ON o.order_id = p.order_id -- LEFT JOIN jika order mungkin belum dibayar
-       WHERE o.order_id = ?`,
-      [orderId]
-    );
-    if (orders.length === 0) return null;
+            const queries = items.map(item => {
+                // Pastikan `item.total_price` sudah dihitung di service layer jika perlu
+                return db.execute(
+                    `INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)`, // Nama kolom price di order_items
+                    [orderId, item.product_id, item.quantity, item.price] // Ambil price dari item
+                );
+            });
+            await Promise.all(queries);
+        } catch (error) {
+            console.error(`Error adding order items for order ID ${orderId} in DB:`, error.message);
+            throw new Error('Database error: Failed to create order items');
+        }
+    },
 
-    const order = orders[0];
-    const [items] = await db.execute(
-      `SELECT oi.*, prod.name, prod.image
-       FROM order_items oi
-       JOIN products prod ON oi.product_id = prod.product_id
-       WHERE oi.order_id = ?`,
-      [orderId]
-    );
-    order.items = items;
-    return order;
-  } catch (error) {
-    throw new Error('Database error: ' + error.message);
-  }
-};
+    /**
+     * Mengambil detail pesanan berdasarkan ID, termasuk alamat pengiriman, informasi pembayaran, dan item pesanan.
+     * @param {number} orderId - ID pesanan.
+     * @returns {Promise<Object|null>} Objek pesanan lengkap jika ditemukan, null jika tidak.
+     * @throws {Error} Jika terjadi kesalahan database.
+     */
+    findById: async (orderId) => { // Mengganti getOrderById menjadi findById
+        try {
+            const [orders] = await db.execute(
+                `SELECT o.*,
+                        a.phone AS address_phone, a.address AS shipping_address_street, a.city AS shipping_address_city, a.postal_code AS shipping_address_postal_code,
+                        p.method AS payment_method, p.status AS payment_status, p.transaction_id AS payment_transaction_id, p.amount_paid AS payment_amount_paid, p.paid_at AS payment_paid_at
+                 FROM orders o
+                 JOIN addresses a ON o.address_id = a.address_id
+                 LEFT JOIN payments p ON o.order_id = p.order_id -- LEFT JOIN jika order mungkin belum dibayar
+                 WHERE o.order_id = ?`,
+                [orderId]
+            );
+            if (orders.length === 0) return null;
 
-// ambil semua order berdasarkan user id (untuk riwayat order pengguna)
-exports.getOrdersByUserId = async (userId) => {
-  try {
-    const [orders] = await db.execute(
-      `SELECT o.*,
-              a.phone AS address_phone, a.address AS shipping_address_street, a.city AS shipping_address_city, a.postal_code AS shipping_address_postal_code,
-              p.method AS payment_method, p.status AS payment_status, p.transaction_id AS payment_transaction_id, p.amount_paid AS payment_amount_paid, p.paid_at AS payment_paid_at
-       FROM orders o
-       JOIN addresses a ON o.address_id = a.address_id
-       LEFT JOIN payments p ON o.order_id = p.order_id
-       WHERE o.user_id = ?
-       ORDER BY o.created_at DESC`,
-      [userId]
-    );
-    if (orders.length === 0) return [];
+            const order = orders[0];
+            const [items] = await db.execute(
+                `SELECT oi.*, prod.name, prod.image
+                 FROM order_items oi
+                 JOIN products prod ON oi.product_id = prod.product_id
+                 WHERE oi.order_id = ?`,
+                [orderId]
+            );
+            order.items = items;
+            return order;
+        } catch (error) {
+            console.error(`Error fetching order by ID ${orderId} from DB:`, error.message);
+            throw new Error('Database error: Failed to fetch order by ID');
+        }
+    },
 
-    // FIX: Memuat item untuk setiap order
-    for (let order of orders) {
-      const [items] = await db.execute(
-        `SELECT oi.*, prod.name, prod.image
-         FROM order_items oi
-         JOIN products prod ON oi.product_id = prod.product_id
-         WHERE oi.order_id = ?`,
-        [order.order_id]
-      );
-      order.items = items; // Menambahkan properti items ke setiap objek order
+    /**
+     * Mengambil semua pesanan berdasarkan ID pengguna, termasuk alamat, informasi pembayaran, dan item pesanan.
+     * @param {number} userId - ID pengguna.
+     * @returns {Promise<Array>} Array objek pesanan lengkap.
+     * @throws {Error} Jika terjadi kesalahan database.
+     */
+    findByUserId: async (userId) => { // Mengganti getOrdersByUserId menjadi findByUserId
+        try {
+            const [orders] = await db.execute(
+                `SELECT o.*,
+                        a.phone AS address_phone, a.address AS shipping_address_street, a.city AS shipping_address_city, a.postal_code AS shipping_address_postal_code,
+                        p.method AS payment_method, p.status AS payment_status, p.transaction_id AS payment_transaction_id, p.amount_paid AS payment_amount_paid, p.paid_at AS payment_paid_at
+                 FROM orders o
+                 JOIN addresses a ON o.address_id = a.address_id
+                 LEFT JOIN payments p ON o.order_id = p.order_id
+                 WHERE o.user_id = ?
+                 ORDER BY o.created_at DESC`,
+                [userId]
+            );
+
+            // Memuat item untuk setiap order secara efisien
+            const ordersWithItems = await Promise.all(orders.map(async (order) => {
+                const [items] = await db.execute(
+                    `SELECT oi.*, prod.name, prod.image
+                     FROM order_items oi
+                     JOIN products prod ON oi.product_id = prod.product_id
+                     WHERE oi.order_id = ?`,
+                    [order.order_id]
+                );
+                order.items = items;
+                return order;
+            }));
+
+            return ordersWithItems;
+        } catch (error) {
+            console.error(`Error fetching orders for user ID ${userId} from DB:`, error.message);
+            throw new Error('Database error: Failed to fetch orders by user ID');
+        }
+    },
+
+    /**
+     * Memperbarui status pesanan.
+     * @param {number} orderId - ID pesanan.
+     * @param {string} status - Status pesanan baru (e.g., 'pending', 'processing', 'shipped', 'delivered', 'cancelled').
+     * @returns {Promise<boolean>} True jika status berhasil diperbarui, false jika tidak ditemukan.
+     * @throws {Error} Jika terjadi kesalahan database.
+     */
+    updateStatus: async (orderId, status) => { // Mengganti updateOrderStatus menjadi updateStatus
+        try {
+            const [result] = await db.execute(
+                'UPDATE orders SET status = ? WHERE order_id = ?',
+                [status, orderId]
+            );
+            return result.affectedRows > 0;
+        } catch (error) {
+            console.error(`Error updating order status for order ID ${orderId} in DB:`, error.message);
+            throw new Error('Database error: Failed to update order status');
+        }
+    },
+
+    /**
+     * Mengambil semua pesanan (untuk admin).
+     * @returns {Promise<Array>} Array objek pesanan lengkap.
+     * @throws {Error} Jika terjadi kesalahan database.
+     */
+    findAll: async () => {
+        try {
+            const [orders] = await db.execute(
+                `SELECT o.*,
+                        u.username AS user_username, u.email AS user_email,
+                        a.phone AS address_phone, a.address AS shipping_address_street, a.city AS shipping_address_city, a.postal_code AS shipping_address_postal_code,
+                        p.method AS payment_method, p.status AS payment_status, p.transaction_id AS payment_transaction_id, p.amount_paid AS payment_amount_paid, p.paid_at AS payment_paid_at
+                 FROM orders o
+                 JOIN users u ON o.user_id = u.user_id
+                 JOIN addresses a ON o.address_id = a.address_id
+                 LEFT JOIN payments p ON o.order_id = p.order_id
+                 ORDER BY o.created_at DESC`
+            );
+
+            // Memuat item untuk setiap order secara efisien
+            const ordersWithItems = await Promise.all(orders.map(async (order) => {
+                const [items] = await db.execute(
+                    `SELECT oi.*, prod.name, prod.image
+                     FROM order_items oi
+                     JOIN products prod ON oi.product_id = prod.product_id
+                     WHERE oi.order_id = ?`,
+                    [order.order_id]
+                );
+                order.items = items;
+                return order;
+            }));
+
+            return ordersWithItems;
+        } catch (error) {
+            console.error('Error fetching all orders from DB:', error.message);
+            throw new Error('Database error: Failed to fetch all orders');
+        }
+    },
+
+    /**
+     * Mengambil pesanan berdasarkan status (untuk admin).
+     * @param {string} status - Status pesanan.
+     * @returns {Promise<Array>} Array objek pesanan lengkap.
+     * @throws {Error} Jika terjadi kesalahan database.
+     */
+    findByStatus: async (status) => {
+        try {
+            const [orders] = await db.execute(
+                `SELECT o.*,
+                        u.username AS user_username, u.email AS user_email,
+                        a.phone AS address_phone, a.address AS shipping_address_street, a.city AS shipping_address_city, a.postal_code AS shipping_address_postal_code,
+                        p.method AS payment_method, p.status AS payment_status, p.transaction_id AS payment_transaction_id, p.amount_paid AS payment_amount_paid, p.paid_at AS payment_paid_at
+                 FROM orders o
+                 JOIN users u ON o.user_id = u.user_id
+                 JOIN addresses a ON o.address_id = a.address_id
+                 LEFT JOIN payments p ON o.order_id = p.order_id
+                 WHERE o.status = ?
+                 ORDER BY o.created_at DESC`,
+                [status]
+            );
+
+            const ordersWithItems = await Promise.all(orders.map(async (order) => {
+                const [items] = await db.execute(
+                    `SELECT oi.*, prod.name, prod.image
+                     FROM order_items oi
+                     JOIN products prod ON oi.product_id = prod.product_id
+                     WHERE oi.order_id = ?`,
+                    [order.order_id]
+                );
+                order.items = items;
+                return order;
+            }));
+
+            return ordersWithItems;
+        } catch (error) {
+            console.error(`Error fetching orders by status '${status}' from DB:`, error.message);
+            throw new Error('Database error: Failed to fetch orders by status');
+        }
+    },
+
+    /**
+     * Mengecek apakah seorang pengguna telah membeli produk tertentu.
+     * Digunakan untuk memvalidasi apakah pengguna berhak memberikan ulasan.
+     * @param {number} userId - ID pengguna.
+     * @param {number} productId - ID produk.
+     * @returns {Promise<boolean>} True jika pengguna telah membeli produk, false jika tidak.
+     * @throws {Error} Jika terjadi kesalahan database.
+     */
+    hasUserPurchasedProduct: async (userId, productId) => {
+        try {
+            const [rows] = await db.execute(
+                `SELECT COUNT(DISTINCT oi.order_item_id) AS count
+                 FROM orders o
+                 JOIN order_items oi ON o.order_id = oi.order_id
+                 WHERE o.user_id = ? AND oi.product_id = ? AND o.status IN ('completed', 'delivered', 'shipped')`, // Mempertimbangkan status order yang relevan
+                [userId, productId]
+            );
+            return rows[0].count > 0;
+        } catch (error) {
+            console.error(`Error checking if user ID ${userId} purchased product ID ${productId} in DB:`, error.message);
+            throw new Error('Database error: Failed to check user purchase history');
+        }
     }
-    return orders;
-  } catch (error) {
-    throw new Error('Database error: ' + error.message);
-  }
 };
 
-exports.updateOrderStatus = async (orderId, status) => {
-  try {
-    const [result] = await db.execute(
-      'UPDATE orders SET status = ? WHERE order_id = ?',
-      [status, orderId]
-    );
-    return result.affectedRows > 0;
-  } catch (error) {
-    throw new Error('Database error: ' + error.message);
-  }
-};
+module.exports = Order;
