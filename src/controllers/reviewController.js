@@ -1,53 +1,87 @@
-const reviewModel = require('../models/reviewModel');
+// src/controllers/reviewController.js
+const reviewService = require('../services/reviewService');
+const { getCommonRenderData } = require('../utils/renderHelpers'); // Untuk data render umum
 
-exports.createReview = async (req, res) => {
-  const userId = req.userId;
-  const { productId, rating, comment } = req.body;
+const reviewController = {
+    /**
+     * Membuat ulasan baru.
+     * @param {Object} req - Objek request Express (req.userId dari authMiddleware, req.body).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    createReview: async (req, res, next) => {
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const reviewData = req.body; // { productId, rating, comment }
+            const result = await reviewService.createReview(req.userId, reviewData);
+            res.status(201).json(result); // Status 201 Created
+        } catch (error) {
+            console.error('Error in reviewController.createReview:', error.message);
+            next(error);
+        }
+    },
 
-  if (!productId || !rating || rating < 1 || rating > 5) {
-    return res.status(400).json({ message: 'Invalid input data' });
-  }
+    /**
+     * Mengambil semua ulasan untuk produk tertentu.
+     * @param {Object} req - Objek request Express (req.params.productId).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    getReviewsByProductId: async (req, res, next) => {
+        const { productId } = req.params;
+        try {
+            const result = await reviewService.getReviewsByProductId(productId);
+            res.status(200).json(result);
+            // Jika ingin merender bagian ulasan di halaman produk:
+            // res.render('product-reviews-partial', { reviews: result.data, averageRating: result.averageRating });
+        } catch (error) {
+            console.error('Error in reviewController.getReviewsByProductId:', error.message);
+            next(error);
+        }
+    },
 
-  try {
-    const reviewId = await reviewModel.createReview({
-      user_id: userId,
-      product_id: productId,
-      rating,
-      comment: comment || null
-    });
-    res.status(201).json({ message: 'Review created successfully', reviewId });
-  } catch (error) {
-    next(error);  
-  }
-}
+    /**
+     * Memperbarui ulasan.
+     * @param {Object} req - Objek request Express (req.params.id, req.userId, req.body).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    updateReview: async (req, res, next) => {
+        const { id } = req.params; // reviewId
+        const updateData = req.body; // { rating, comment }
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const result = await reviewService.updateReview(id, req.userId, updateData);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in reviewController.updateReview:', error.message);
+            next(error);
+        }
+    },
 
-exports.getReviewsByProductId = async (req, res) => {
-  const product_id = req.params.id;
-  try {
-    const reviews = await reviewModel.getReviewsByProductId(product_id);
-    res.status(200).json(reviews);
-  } catch (error) {
-    next(error);
-  }
-}
-
-exports.deleteReview = async (req, res) => {
-  const reviewId = req.params.id;
-  const userId = req.userId;
-  const userRole = req.role;
-
-  try {
-    const review = await reviewModel.findReviewById(reviewId);
-    if (!review) return res.status(404).json({ message: 'Review not found' });
-
-    if (review.user_id !== userId && userRole !== 'admin') {
-      return res.status(403).json({ message: 'You do not have permission to delete this review' });
+    /**
+     * Menghapus ulasan.
+     * @param {Object} req - Objek request Express (req.params.id, req.userId, req.user.role).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    deleteReview: async (req, res, next) => {
+        const { id } = req.params; // reviewId
+        try {
+            if (!req.userId || !req.user || !req.user.role) { // Pastikan user dan role ada
+                return next(new ApiError(401, 'Unauthorized: User ID or role not found in request.'));
+            }
+            const result = await reviewService.deleteReview(id, req.userId, req.user.role);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in reviewController.deleteReview:', error.message);
+            next(error);
+        }
     }
+};
 
-    await reviewModel.deleteReview(reviewId);
-    res.status(200).json({ message: 'Review deleted successfully' });
-  } catch (error) {
-    next(error);
-  }
-
-}
+module.exports = reviewController;

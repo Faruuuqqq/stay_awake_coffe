@@ -1,118 +1,108 @@
-const cartModel = require('../models/cartModel');
-const productModel = require('../models/productModel');
+// src/controllers/cartController.js
+const cartService = require('../services/cartService');
+const { getCommonRenderData } = require('../utils/renderHelpers'); // Untuk data render umum
 
-exports.getCart = async (req, res) => {
-  const userId = req.userId;
-  if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+const cartController = {
+    /**
+     * Mendapatkan semua item dalam keranjang pengguna yang sedang login.
+     * @param {Object} req - Objek request Express (req.userId dari authMiddleware).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    getCart: async (req, res, next) => {
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const result = await cartService.getCartItems(req.userId);
+            res.status(200).json(result);
+            // Jika ingin merender halaman keranjang:
+            // const commonData = await getCommonRenderData(req.userId, { title: 'Your Cart' });
+            // res.render('cart', { ...commonData, cart: result.data });
+        } catch (error) {
+            console.error('Error in cartController.getCart:', error.message);
+            next(error);
+        }
+    },
 
-  try {
-    const cart = await cartModel.getCartByUserId(userId);
-    if (!cart) {
-      return res.status(404).json({ error: 'Cart not found' });
+    /**
+     * Menambahkan produk ke keranjang atau memperbarui kuantitasnya.
+     * @param {Object} req - Objek request Express (req.userId, req.body: { productId, quantity }).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    addItemToCart: async (req, res, next) => {
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const { productId, quantity } = req.body;
+            const result = await cartService.addOrUpdateCartItem(req.userId, { productId, quantity });
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in cartController.addItemToCart:', error.message);
+            next(error);
+        }
+    },
+
+    /**
+     * Memperbarui kuantitas item tertentu dalam keranjang.
+     * @param {Object} req - Objek request Express (req.userId, req.body: { productId, quantity }).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    updateCartItemQuantity: async (req, res, next) => {
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const { productId, quantity } = req.body; // Ambil productId dari body
+            const result = await cartService.updateCartItemQuantity(req.userId, productId, quantity);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in cartController.updateCartItemQuantity:', error.message);
+            next(error);
+        }
+    },
+
+    /**
+     * Menghapus item tertentu dari keranjang.
+     * @param {Object} req - Objek request Express (req.userId, req.params.productId).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    removeCartItem: async (req, res, next) => {
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const { productId } = req.params; // Ambil productId dari params
+            const result = await cartService.removeCartItem(req.userId, productId);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in cartController.removeCartItem:', error.message);
+            next(error);
+        }
+    },
+
+    /**
+     * Mengosongkan seluruh keranjang pengguna.
+     * @param {Object} req - Objek request Express (req.userId).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    clearCart: async (req, res, next) => {
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const result = await cartService.clearCart(req.userId);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in cartController.clearCart:', error.message);
+            next(error);
+        }
     }
-
-    const items = await cartModel.getCartItems(cart.cart_id);
-    if (!items || items.length === 0) {
-      return res.render("cart", {
-        cartId: cart.cart_id,
-        items: [],
-        totalPrice: 0,
-        title: 'Stay Awake Coffee - Cart'
-      });
-    }
-
-    const totalPrice = items.reduce((sum, item) => sum + (item.price) * item.quantity, 0);
-
-    res.render("cart",{
-      cartId: cart.cart_id,
-      items: items,
-      totalPrice: totalPrice.toFixed(2),
-      title: 'Stay Awake Coffee - Cart'
-    });
-  } catch (error) {
-    next(error);
-  }
 };
 
-exports.addToCart = async (req, res) => {
-  const userId = req.userId;
-  const { productId, quantity } = req.body;
-
-  if (!productId || !quantity || quantity <= 0) {
-    return res.status(400).json({ message: 'Product ID and quantity > 0 required' });
-  }
-
-  try {
-    const product = await productModel.getProductById(productId);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    let cart = await cartModel.getCartByUserId(userId);
-    if (!cart) {
-      cart = await cartModel.createCart(userId);
-    }
-
-    const existingItem = await cartModel.getCartItemByProductId(userId, productId);
-    if (existingItem) {
-      await cartModel.updateCartItem(cart.cart_id, productId, existingItem.quantity + quantity);
-    } else {
-      await cartModel.addOrUpdateCartItem(cart.cart_id, productId, quantity)
-    }
-
-    res.status(200).json({ message: 'Item added to cart' });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.updateCartItem = async (req, res) => {
-  const userId = req.userId;
-  const { productId, quantity } = req.body;
-
-  if (!productId || !quantity || quantity <= 0) {
-    return res.status(400).json({ error: 'Product ID and quantity > 0 required' });
-  }
-
-  try {
-    const cart = await cartModel.getCartByUserId(userId);
-    const updated = await cartModel.updateCartItem(cart.cart_id, productId, quantity);
-    if (!updated) return res.status(404).json({ error: 'Cart item not found' });
-
-    res.json({ message: 'Quantity updated' });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.removeFromCart = async (req, res) => {
-  const userId = req.userId;
-  const { productId } = req.body;
-  if (!productId) {
-    return res.status(400).json({ error: 'Product ID required' });
-  }
-
-  try {
-    const cart = await cartModel.getCartByUserId(userId);
-    const removed = await cartModel.removeCartItem(cart.cart_id, productId);
-    if (!removed) return res.status(404).json({ error: 'Cart item not found' });
-
-    res.json({ message: 'Cart item removed' });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.clearCart = async (req, res) => {
-  const userId = req.userId;
-
-  try {
-    const cart = await cartModel.getCartByUserId(userId);
-    const cleared = await cartModel.clearCart(cart.cart_id);
-    if (!cleared) return res.status(404).json({ error: 'Cart not found' });
-
-    res.json({ message: 'cleared cart' });
-  } catch (error) {
-    next(error);
-  }
-};
+module.exports = cartController;

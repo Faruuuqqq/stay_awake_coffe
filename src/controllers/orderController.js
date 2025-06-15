@@ -1,148 +1,124 @@
-const orderModel = require('../models/orderModel');
-const cartModel = require('../models/cartModel');
-const userModel = require('../models/userModel');
-const addressModel = require('../models/addressModel');
+// src/controllers/orderController.js
+const orderService = require('../services/orderService');
+const { getCommonRenderData } = require('../utils/renderHelpers'); // Untuk data render umum
+const userModel = require('../models/userModel'); // Untuk mengambil data user jika diperlukan di render
 
-async function getCheckoutPageData(userId, reqBody = {}) {
-  let user = null;
-  let addresses = [];
-  let cartItems = [];
-  let totalPrice = 0;
+const orderController = {
+    /**
+     * Membuat pesanan baru dari keranjang pengguna yang sedang login.
+     * @param {Object} req - Objek request Express (req.userId dari authMiddleware, req.body: { addressId }).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    createOrder: async (req, res, next) => {
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const { addressId } = req.body;
+            const result = await orderService.createOrderFromCart(req.userId, { addressId });
+            res.status(201).json(result); // Status 201 Created
+        } catch (error) {
+            console.error('Error in orderController.createOrder:', error.message);
+            next(error);
+        }
+    },
 
-  if (userId) {
-    user = await userModel.findById(userId);
-    addresses = await addressModel.getAddressesByUserId(userId);
-    const cart = await cartModel.getCartByUserId(userId);
-    if (cart) {
-      cartItems = await cartModel.getCartItems(cart.cart_id);
-      totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    /**
+     * Mengambil riwayat pesanan untuk pengguna yang sedang login.
+     * @param {Object} req - Objek request Express (req.userId dari authMiddleware).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    getMyOrders: async (req, res, next) => {
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const result = await orderService.getMyOrders(req.userId);
+            res.status(200).json(result);
+            // Jika ingin merender halaman riwayat pesanan:
+            // const commonData = await getCommonRenderData(req.userId, { title: 'My Orders' });
+            // res.render('user-orders', { ...commonData, orders: result.data });
+        } catch (error) {
+            console.error('Error in orderController.getMyOrders:', error.message);
+            next(error);
+        }
+    },
+
+    /**
+     * Mengambil detail pesanan tertentu untuk pengguna yang sedang login.
+     * @param {Object} req - Objek request Express (req.params.id, req.userId).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    getOrderDetail: async (req, res, next) => {
+        const { id } = req.params;
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const result = await orderService.getOrderDetail(id, req.userId);
+            res.status(200).json(result);
+            // Jika ingin merender halaman detail pesanan:
+            // const commonData = await getCommonRenderData(req.userId, { title: 'Order Details' });
+            // res.render('order-detail', { ...commonData, order: result.data });
+        } catch (error) {
+            console.error('Error in orderController.getOrderDetail:', error.message);
+            next(error);
+        }
+    },
+
+    /**
+     * Mengambil semua pesanan (hanya untuk Admin).
+     * @param {Object} req - Objek request Express.
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    getAllOrders: async (req, res, next) => {
+        try {
+            const result = await orderService.getAllOrders();
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in orderController.getAllOrders:', error.message);
+            next(error);
+        }
+    },
+
+    /**
+     * Mengambil pesanan berdasarkan status (hanya untuk Admin).
+     * @param {Object} req - Objek request Express (req.query.status).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    getOrdersByStatus: async (req, res, next) => {
+        const { status } = req.query; // Ambil status dari query params
+        try {
+            const result = await orderService.getOrdersByStatus(status);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in orderController.getOrdersByStatus:', error.message);
+            next(error);
+        }
+    },
+
+    /**
+     * Memperbarui status pesanan (hanya untuk Admin).
+     * @param {Object} req - Objek request Express (req.params.id, req.body.status).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    updateOrderStatus: async (req, res, next) => {
+        const { id } = req.params;
+        const { status } = req.body;
+        try {
+            const result = await orderService.updateOrderStatus(id, { status });
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in orderController.updateOrderStatus:', error.message);
+            next(error);
+        }
     }
-  }
-
-  return {
-    user,
-    addresses,
-    items: cartItems,
-    totalPrice,
-    formData: reqBody,
-    title: 'Stay Awake Coffee - Checkout',
-    error: null,
-    success: null,
-  };
-}
-
-exports.createOrder = async (req, res) => {
-  const userId = req.userId;
-  const { address_id } = req.body;
-
-  const commonCheckoutData = await getCheckoutPageData(userId, req.body);
-
-  if (!address_id) {
-    return res.render('checkout', {
-      ...commonCheckoutData,
-      error: 'Address is required',
-      success: null,
-    });
-  }
-
-  try {
-    const cart = await cartModel.getCartByUserId(userId);
-    if (!cart) {
-      return res.render('checkout', {
-        ...commonCheckoutData,
-        error: 'Cart is empty',
-        success: null,
-      });
-    }
-
-    const items = await cartModel.getCartItems(cart.cart_id);
-    if (items.length === 0) {
-      return res.render('checkout', {
-        ...commonCheckoutData,
-        error: 'Cart items is empty',
-        success: null,
-      });
-    }
-
-    const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-    const orderId = await orderModel.createOrder(userId, address_id, totalPrice);
-
-    const orderItems = items.map((item) => ({
-      product_id: item.product_id,
-      quantity: item.quantity,
-      total_price: item.price * item.quantity, // Kolom ini akan masuk ke order_items.total_price
-    }));
-    await orderModel.createOrderItems(orderId, orderItems);
-
-
-    await cartModel.clearCart(cart.cart_id);
-
-    res.redirect(`/payment?orderId=${orderId}`);
-  } catch (error) {
-    console.error("Error creating order:", error);
-    return res.render('checkout', {
-      ...commonCheckoutData,
-      error: error.message,
-      success: null,
-    });
-  }
 };
 
-exports.getCheckoutPage = async (req, res) => {
-  const userId = req.userId;
-
-  if (!userId) {
-    return res.redirect('/users/login-register?error=Login required to checkout');
-  }
-
-  try {
-    const checkoutData = await getCheckoutPageData(userId);
-    res.render('checkout', checkoutData);
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.getOrderById = async (req, res) => {
-  const orderId = req.params.id;
-  try {
-    const order = await orderModel.getOrderById(orderId);
-    if (!order) return res.status(404).json({ error:'order not found' });
-    res.render('order-detail', {
-      order,
-      title: 'Stay Awake Coffee - Order Detail',
-      error: null,
-      success: null,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.getOrdersByUser = async (req, res) => {
-  const userId = req.userId;
-  try {
-    const orders = await orderModel.getOrdersByUserId(userId);
-    res.json(orders);
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.updateOrderStatus = async (req, res) => {
-  const orderId = req.params.id;
-  const { status } = req.body;
-
-  if (!['pending', 'completed'].includes(status)) {
-    return res.status(400).json({ error: 'status not valid' });
-  }
-
-  try {
-    const updated = await orderModel.updateOrderStatus(orderId, status);
-    if (!updated) return res.status(404).json({ error: 'order not found' });
-    res.json({ message: 'status order successfully updated' });
-  } catch (error) {
-    next(error);
-  }
-};
+module.exports = orderController;

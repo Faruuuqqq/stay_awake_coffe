@@ -1,154 +1,109 @@
-const productModel = require('../models/productModel');
-const categoryModel = require('../models/categoryModel');
-const { getCommonRenderData } = require('../utils/renderHelpers');
+// src/controllers/productController.js
+const productService = require('../services/productService');
+const { getCommonRenderData } = require('../utils/renderHelpers'); // Tetap digunakan untuk data render umum
+const userModel = require('../models/userModel'); // Diperlukan untuk getProductById agar bisa mendapatkan user
 
-// Get all product with categories
-exports.getAllProducts = async (req, res) => {
-  try {
-    const products = await productModel.getAllProducts();
-    if (!products || products.length === 0) {
-      return res.status(404).json({ error: 'No products found' });
-    }
+const productController = {
+    // Fungsi getAllProducts yang sebelumnya mengembalikan JSON, sekarang diganti ke getProductsPage
+    // Jika Anda masih butuh endpoint JSON untuk semua produk tanpa render HTML, bisa dibuat terpisah
+    // atau diadaptasi dari getAllProductsForPage di service.
+    // getAllProducts: async (req, res, next) => { /* ... */ }, // Dihapus atau diadaptasi
 
-    const categories = await categoryModel.getAllCategories();
-    if (!categories || categories.length === 0) {
-      return res.status(404).json({ error: 'No categories found' });
+    // Mengambil halaman produk dengan filter dan rendering
+    getProductsPage: async (req, res, next) => {
+        const { search, category, priceMin, priceMax, sort } = req.query;
+
+        try {
+            const filters = {
+                search: search || '',
+                category: category || '',
+                priceMin: parseFloat(priceMin) || 0,
+                priceMax: parseFloat(priceMax) || 999999,
+                sort: sort || ''
+            };
+
+            const serviceResult = await productService.getAllProductsForPage(filters, req.userId); // Teruskan userId jika service butuh
+            const commonData = await getCommonRenderData(req.userId, { title: 'Stay Awake Coffee - Products' });
+
+            res.render('products', {
+                ...commonData,
+                products: serviceResult.products,
+                categories: serviceResult.categories,
+                filters: serviceResult.filters
+            });
+        } catch (error) {
+            console.error('Error loading products page:', error.message);
+            const commonData = await getCommonRenderData(req.userId, { title: 'Error' });
+            // Mengirimkan status 500 dan render halaman error atau halaman produk kosong
+            res.status(500).render('products', { ...commonData, products: [], categories: [], filters: {}, error: 'Failed to load products' });
+        }
+    },
+
+    // Get product by ID (untuk detail halaman)
+    getProductById: async (req, res, next) => {
+        const id = req.params.id;
+        try {
+            // Mengambil data user di controller karena ini terkait sesi/autentikasi request
+            let user = null;
+            if (req.userId) {
+                user = await userModel.findById(req.userId); // Asumsi ada method findById di userModel
+            }
+
+            const serviceResult = await productService.getProductDetail(id); // userId mungkin tidak diperlukan di sini
+            
+            // Menggabungkan data dari service dengan data commonRenderData dan user
+            const commonData = await getCommonRenderData(req.userId, { title: serviceResult.product.name });
+
+            res.render('product-detail', {
+                ...commonData,
+                product: serviceResult.product,
+                categories: serviceResult.categories,
+                user: user, // Teruskan user yang sudah diambil dari model
+            });
+        } catch (error) {
+            // Periksa statusCode dari error yang dilempar dari service
+            if (error.statusCode === 404) {
+                const commonData = await getCommonRenderData(req.userId, { title: 'Not Found' });
+                return res.status(404).render('404', { ...commonData, message: error.message }); // Render halaman 404
+            }
+            console.error('Error fetching product detail:', error.message);
+            next(error); // Meneruskan error lainnya ke middleware error global
+        }
+    },
+
+    // Create new product (admin only)
+    createProduct: async (req, res, next) => {
+        const { category_ids, ...productData } = req.body; // Pisahkan category_ids dari productData
+        try {
+            const result = await productService.createProduct(productData, category_ids);
+            res.status(201).json(result); // result sudah berisi message dan productId dari service
+        } catch (error) {
+            next(error); // Meneruskan error ke middleware error global
+        }
+    },
+
+    // Update product (admin only)
+    updateProduct: async (req, res, next) => {
+        const id = req.params.id;
+        const { category_ids, ...productData } = req.body;
+        try {
+            const result = await productService.updateProduct(id, productData, category_ids);
+            res.status(200).json(result);
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    // Delete product (admin only)
+    deleteProduct: async (req, res, next) => {
+        const id = req.params.id;
+        try {
+            const result = await productService.deleteProduct(id);
+            res.status(200).json(result);
+        } catch (error) {
+            next(error);
+        }
     }
-    // Mengambil kategori produk yang sudah digabungkan dalam satu string
-    res.render('products', {
-      products,
-      categories,
-      title: 'Products Page'
-    });
-  } catch (error) {
-    console.error('Error loading products:', error.message);
-    res.status(500).send('Internal Server Error');
-  }
 };
 
-// Get product by ID
-exports.getProductById = async (req, res) => {
-  const id = req.params.id;
-  try {
-    const product = await productModel.getProductById(id);
-    if (!product) return res.status(404).json({ error: 'Product not found' });
-
-    // Mengambil kategori produk yang sudah digabungkan dalam satu string
-    const categories = product.categories ? product.categories.split(',') : [];
-
-    let user = null;
-    if (req.userId) {
-      user = await productModel.getUserById(req.userId);
-    }
-
-    res.render('product-detail', {
-      product,
-      categories,
-      user: user,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// Create new product and set category (admin only)
-exports.createProduct = async (req, res) => {
-  const { name, description, price, image, stock, category_ids } = req.body;
-  // category_ids itu array kategori misal : [1, 2, 4]
-  if (!name || !price || stock == null) {
-      return res.status(400).json({ error: 'Name, price, and stock are required' });
-  }
-  
-  try {
-    const productId = await productModel.createProduct({ name, description, price, image, stock });
-
-    if (Array.isArray(category_ids)) {
-      for (const categoryId of category_ids) {
-        await productModel.addProductCategory(productId, categoryId);
-      }
-    }
-
-    res.status(201).json({ message: 'Product created', productId });
-  } catch (error) {
-    console.error("Error creating product:", error.message);
-  }
-}
-
-// Update product (admin only)
-exports.updateProduct = async (req, res) => {
-  const id = req.params.id;
-  const { name, description, price, image, stock, category_ids } = req.body;
-  
-  try {
-    const updated = await productModel.updateProduct(id, { name, description, price, image, stock, category_ids });
-    if (!updated) return res.status(404).json({ error: 'Product not found' });
-    
-    if(Array.isArray(category_ids)) {
-      await productModel.removeProductCategory(id);
-      for (const categoryId of category_ids) {
-        await productModel.addProductCategory(id, categoryId);
-      }
-    }
-
-    res.json({ message: 'Product updated' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// Delete produk beserta relasi kategori (admin no)
-exports.deleteProduct = async (req, res) => {
-  const id = req.params.id;
-
-  try {
-    await productModel.removeProductCategory(id);
-    const deleted = await productModel.deleteProduct(id);
-    if (!deleted) return res.status(404).json({ error: 'Product not found' });
-
-    res.json({ message: 'Product deleted' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.getProductsPage = async (req, res) => {
-  const { search, category, priceMin, priceMax, sort } = req.query; // Ambil semua parameter filter
-
-  try {
-    const filters = {
-      search: search || '',
-      category: category || '',
-      priceMin: parseFloat(priceMin) || 0,
-      priceMax: parseFloat(priceMax) || 999999, // Asumsi max price cukup besar
-      sort: sort || ''
-    };
-
-    const products = await productModel.getProductsWithFilter(filters);
-    const categories = await categoryModel.getAllCategories();
-    const commonData = await getCommonRenderData(req.userId, { title: 'Stay Awake Coffee - Products' });
-
-    res.render('products', {
-      ...commonData, // Teruskan user, cartItemCount dari res.locals
-      products: products,
-      categories: categories, // Teruskan semua kategori untuk sidebar filter
-      filters: filters // Teruskan filter yang aktif kembali ke frontend
-    });
-  } catch (error) {
-    console.error('Error loading products page:', error.message);
-    const commonData = await getCommonRenderData(req.userId, { title: 'Error' });
-    res.status(500).render('products', { ...commonData, products: [], categories: [], filters: {} });
-  }
-};
-
-// exports.getBestSellers = async (req, res) => {
-//   try {
-//     const products = await productModel.getAllProducts();  // Assuming this fetches all products
-//     res.render('home', { 
-//       products: products.filter(product => product.isBestSeller), // Only passing best-sellers
-//       categories: await categoryModel.getAllCategories()  // Assuming you also want to display categories
-//     });
-//   } catch (error) {
-//     console.error('Error fetching best sellers:', error.message);
-//     res.status(500).send('Internal Server Error');
-//   }
-// };
+module.exports = productController;

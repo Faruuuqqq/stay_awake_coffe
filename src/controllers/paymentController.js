@@ -1,156 +1,100 @@
-const paymentModel = require('../models/paymentModel');
-const userModel = require('../models/userModel');
-const orderModel = require('../models/orderModel');
+// src/controllers/paymentController.js
+const paymentService = require('../services/paymentService');
+const { getCommonRenderData } = require('../utils/renderHelpers'); // Untuk data render umum
 
-/**
- * Handles the creation of a new payment.
- * This is an API endpoint, so it responds with JSON.
- */
-exports.createPayment = async (req, res) => {
-  const { order_id, method, status, transaction_id, amount_paid, paid_at } = req.body;
+const paymentController = {
+    /**
+     * Mencatat pembayaran baru.
+     * Endpoint ini biasanya dipanggil oleh gateway pembayaran (webhook) atau oleh frontend setelah konfirmasi pembayaran.
+     * @param {Object} req - Objek request Express (req.body berisi data pembayaran).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    createPayment: async (req, res, next) => {
+        try {
+            const paymentData = req.body; // { orderId, method, status, transactionId, amountPaid, paidAt }
+            const result = await paymentService.createPayment(paymentData);
+            res.status(201).json(result); // Status 201 Created
+        } catch (error) {
+            console.error('Error in paymentController.createPayment:', error.message);
+            next(error);
+        }
+    },
 
-  if (!order_id || !method || !status || amount_paid === undefined || amount_paid === null) {
-    return res.status(400).json({ message: 'Order ID, payment method, status, and amount paid are required.' });
-  }
+    /**
+     * Mengambil detail pembayaran berdasarkan ID (hanya untuk Admin atau pemilik pembayaran).
+     * @param {Object} req - Objek request Express (req.params.id).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    getPaymentById: async (req, res, next) => {
+        const { id } = req.params;
+        try {
+            // Logika otorisasi bisa ditambahkan di sini atau di middleware:
+            // if (req.user.role !== 'admin' && payment.data.user_id !== req.userId) {
+            //    throw new ForbiddenError('Anda tidak memiliki izin untuk melihat pembayaran ini.');
+            // }
+            const result = await paymentService.getPaymentById(id);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in paymentController.getPaymentById:', error.message);
+            next(error);
+        }
+    },
 
-  try {
-    // Create payment record in the database
-    const paymentId = await paymentModel.createPayment({
-      order_id,
-      method,
-      status,
-      transaction_id: transaction_id || null,
-      amount_paid,
-      paid_at: paid_at || new Date(),
-      error: null 
-    });
+    /**
+     * Mengambil pembayaran berdasarkan ID pesanan (Order ID).
+     * @param {Object} req - Objek request Express (req.params.orderId).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    getPaymentByOrderId: async (req, res, next) => {
+        const { orderId } = req.params;
+        try {
+            const result = await paymentService.getPaymentByOrderId(orderId);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in paymentController.getPaymentByOrderId:', error.message);
+            next(error);
+        }
+    },
 
-    await orderModel.updateOrderStatus(order_id, 'completed'); 
-    res.status(201).json({ message: 'Payment successfully processed', paymentId });
+    /**
+     * Mengambil riwayat pembayaran untuk pengguna yang sedang login.
+     * @param {Object} req - Objek request Express (req.userId dari authMiddleware).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    getMyPayments: async (req, res, next) => {
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const result = await paymentService.getPaymentsByUserId(req.userId);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in paymentController.getMyPayments:', error.message);
+            next(error);
+        }
+    },
 
-  } catch (error) {
-    next(error);
-  }
+    /**
+     * Memperbarui status pembayaran (hanya untuk Admin atau webhook dari payment gateway).
+     * @param {Object} req - Objek request Express (req.params.id, req.body.status).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    updatePaymentStatus: async (req, res, next) => {
+        const { id } = req.params; // payment_id
+        const { status } = req.body;
+        try {
+            const result = await paymentService.updatePaymentStatus(id, { status });
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in paymentController.updatePaymentStatus:', error.message);
+            next(error);
+        }
+    }
 };
 
-/**
- * Retrieves payment details by payment ID.
- * This function renders a payment success/details page.
- */
-exports.getPaymentById = async (req, res) => {
-  const { id: paymentId } = req.params;
-
-  try {
-    const payment = await paymentModel.getPaymentById(paymentId);
-    if (!payment) {
-      return res.status(404).render('error', { title: 'Payment Not Found', message: 'Payment not found.' });
-    }
-
-    const orderDetails = await orderModel.getOrderById(payment.order_id);
-    if (!orderDetails) {
-      return res.status(404).render('error', { title: 'Order Not Found', message: 'Order not found for this payment.' });
-    }
-
-    res.render('payment-success', {
-      payment,
-      orderDetails,
-      title: 'Stay Awake Coffee - Payment Confirmation',
-      success: 'Payment details retrieved successfully',
-      paymentId: payment.payment_id,
-      error: null,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Retrieves payment details by order ID.
- * This is an API endpoint, so it responds with JSON.
- */
-exports.getPaymentByOrderId = async (req, res) => {
-  const { id: orderId } = req.params;
-
-  try {
-    const payment = await paymentModel.getPaymentByOrderId(orderId);
-    if (!payment) {
-      return res.status(404).json({ message: 'Payment not found for this order.' });
-    }
-    res.json(payment);
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Retrieves all payments.
- * This is an API endpoint, so it responds with JSON.
- */
-exports.getAllPayments = async (req, res) => {
-  try {
-    const payments = await paymentModel.getAllPayments();
-    res.json(payments);
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Renders the payment page, redirecting from checkout.
- * It fetches user and order details to display payment options.
- */
-exports.getPaymentPage = async (req, res) => {
-  const userId = req.userId;
-  const orderId = req.query.orderId;
-
-  if (!userId) {
-    return res.redirect('/users/login-register?error=Login is required to proceed with payment.');
-  }
-  if (!orderId) {
-    return res.redirect('/carts?error=No order selected for payment. Please select an order.');
-  }
-
-  try {
-    const user = await userModel.findById(userId);
-    if (!user) {
-      return res.redirect('/users/login-register?error=User not found. Please log in again.');
-    }
-
-    // Fetch order details based on the provided orderId
-    const orderDetails = await orderModel.getOrderById(orderId);
-    if (!orderDetails) {
-      return res.status(404).render('error', { title: 'Order Not Found', message: 'The specified order could not be found.' });
-    }
-
-    // Ensure the order belongs to the logged-in user
-    if (orderDetails.user_id !== userId) {
-      return res.status(403).render('error', { title: 'Access Denied', message: 'You do not have permission to access this order.' });
-    }
-
-    // Check if the order has already been paid
-    const existingPayment = await paymentModel.getPaymentByOrderId(orderId);
-    if (existingPayment && (existingPayment.status === 'paid' || existingPayment.status === 'completed')) {
-      return res.render('payment-success', {
-        success: 'This order has already been paid.',
-        paymentId: existingPayment.payment_id,
-        orderDetails: orderDetails,
-        title: 'Payment Already Processed'
-      });
-    }
-
-    // Render the payment page with order details
-    res.render('payment', {
-      orderDetails: orderDetails,
-      user: user,
-      title: `Stay Awake Coffee - Payment for Order #${orderId}`,
-      error: null,
-      success: null,
-      formData: {
-        order_id: orderId,
-        amount_paid: orderDetails.total_price
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+module.exports = paymentController;

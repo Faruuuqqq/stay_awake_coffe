@@ -1,109 +1,107 @@
-const addressModel = require('../models/addressModel');
+// src/controllers/addressController.js
+const addressService = require('../services/addressService');
+const { getCommonRenderData } = require('../utils/renderHelpers'); // Untuk  data render umum
 
-exports.createAddress = async (req, res) => {
-  const userId = req.userId;
-  const { phone, address, city, postal_code } = req.body;
+const addressController = {
+    /**
+     * Membuat alamat baru untuk pengguna yang sedang login.
+     * @param {Object} req - Objek request Express (req.userId dari authMiddleware, req.body).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    createAddress: async (req, res, next) => {
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const addressData = req.body;
+            const result = await addressService.createAddress(req.userId, addressData);
+            res.status(201).json(result);
+        } catch (error) {
+            console.error('Error in addressController.createAddress:', error.message);
+            next(error);
+        }
+    },
 
-  if (!phone || !address || !city || !postal_code) {
-    return res.status(400).json({ message: 'All fields are required' });
-  }
+    /**
+     * Mengambil semua alamat untuk pengguna yang sedang login.
+     * @param {Object} req - Objek request Express (req.userId dari authMiddleware).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    getAllMyAddresses: async (req, res, next) => {
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const result = await addressService.getAddressesByUserId(req.userId);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in addressController.getAllMyAddresses:', error.message);
+            next(error);
+        }
+    },
 
-  try {
-    const addressId = await addressModel.createAddress({
-      user_id: userId,
-      phone,
-      address,
-      city,
-      postal_code
-    });
-    res.status(201).json({ message: 'Address created successfully', addressId });
-  } catch (error) {
-    next(error);
-  }
-}
+    /**
+     * Mengambil detail alamat tertentu untuk pengguna yang sedang login.
+     * @param {Object} req - Objek request Express (req.params.id, req.userId).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    getAddressById: async (req, res, next) => {
+        const { id } = req.params;
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const result = await addressService.getAddressById(id, req.userId);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in addressController.getAddressById:', error.message);
+            next(error);
+        }
+    },
 
-exports.getAddressById = async (req, res) => {
-  const addressId = req.params.id;
-  const userId = req.userId;
+    /**
+     * Memperbarui alamat tertentu untuk pengguna yang sedang login.
+     * @param {Object} req - Objek request Express (req.params.id, req.userId, req.body).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    updateAddress: async (req, res, next) => {
+        const { id } = req.params;
+        const updateData = req.body;
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const result = await addressService.updateAddress(id, req.userId, updateData);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in addressController.updateAddress:', error.message);
+            next(error);
+        }
+    },
 
-  try {
-    const address = await addressModel.getAddressById(addressId);
-    if (!address)return res.status(404).json({ message: 'Address not found' });
-    
-    if (address.user_id !== userId) {
-      return res.status(403).json({ message: 'You do not have permission to view this address' });
+    /**
+     * Menghapus alamat tertentu untuk pengguna yang sedang login.
+     * @param {Object} req - Objek request Express (req.params.id, req.userId).
+     * @param {Object} res - Objek response Express.
+     * @param {Function} next - Fungsi middleware selanjutnya.
+     */
+    deleteAddress: async (req, res, next) => {
+        const { id } = req.params;
+        try {
+            if (!req.userId) {
+                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            }
+            const result = await addressService.deleteAddress(id, req.userId);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error in addressController.deleteAddress:', error.message);
+            next(error);
+        }
     }
-
-    res.status(200).json(address);
-  } catch (error) {
-    next(error);
-  }
-}
-
-exports.getAddressesByUser = async (req, res) => {
-  const userId = req.params.id;
-  const requesterId = req.userId;
-
-  if (parseInt(userId) !== requesterId) {
-    return res.status(403).json({ message: 'You do not have permission to view these addresses' });
-  }
-
-  try {
-    const addresses = await addressModel.getAddressesByUserId(userId);
-    res.status(200).json(addresses);
-  } catch (error) {
-    next(error);
-  }
-}
-
-exports.updateAddress = async (req, res) => {
-  const { id } = req.params;
-  const { phone, address, city, postal_code } = req.body;
-  const userId = req.userId;
-  
-  try {
-    const existingAddress = await addressModel.getAddressById(id);
-    if (!existingAddress) return res.status(404).json({ message: 'Address not found' });
-    
-    if (existingAddress.user_id !== userId) {
-      return res.status(403).json({ message: 'You do not have permission to update this address' });
-    }
-
-    const updated = await addressModel.updateAddress(id, {
-      phone,
-      address,
-      city,
-      postal_code
-    });
-    if (!updated) {
-      return res.status(400).json({ message: 'Failed to update address' });
-    }
-
-    res.status(200).json({ message: 'Address updated successfully' });
-  } catch (error) {
-    next(error);
-  }
 };
 
-exports.deleteAddress = async (req, res) => {
-  const { id } = req.params;
-  const userId = req.userId;
-
-  try {
-    const existingAddress = await addressModel.getAddressById(id);
-    if (!existingAddress) return res.status(404).json({ message: 'Address not found' });
-    
-    if (existingAddress.user_id !== userId) {
-      return res.status(403).json({ message: 'You do not have permission to delete this address' });
-    }
-
-    const deleted = await addressModel.deleteAddress(id);
-    if (!deleted) {
-      return res.status(400).json({ message: 'Failed to delete address' });
-    }
-
-    res.status(200).json({ message: 'Address deleted successfully' });
-  } catch (error) {
-    next(error);
-  }
-}
+module.exports = addressController;
