@@ -29,8 +29,7 @@ exports.createPayment = async (req, res) => {
     res.status(201).json({ message: 'Payment successfully processed', paymentId });
 
   } catch (error) {
-    console.error('Error creating payment:', error);
-    res.status(500).json({ message: 'Error processing payment', error: error.message });
+    next(error);
   }
 };
 
@@ -61,8 +60,7 @@ exports.getPaymentById = async (req, res) => {
       error: null,
     });
   } catch (error) {
-    console.error('Error fetching payment by ID:', error);
-    res.status(500).render('error', { title: 'Server Error', message: 'Error fetching payment details.' });
+    next(error);
   }
 };
 
@@ -80,8 +78,7 @@ exports.getPaymentByOrderId = async (req, res) => {
     }
     res.json(payment);
   } catch (error) {
-    console.error('Error fetching payment by Order ID:', error);
-    res.status(500).json({ message: 'Error fetching payment details.', error: error.message });
+    next(error);
   }
 };
 
@@ -94,8 +91,7 @@ exports.getAllPayments = async (req, res) => {
     const payments = await paymentModel.getAllPayments();
     res.json(payments);
   } catch (error) {
-    console.error('Error fetching all payments:', error);
-    res.status(500).json({ message: 'Error retrieving payments.', error: error.message });
+    next(error);
   }
 };
 
@@ -155,7 +151,6 @@ exports.getPaymentPage = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching payment page:', error.message);
-    res.status(500).render('error', { title: 'Server Error', message: 'An internal server error occurred while preparing the payment page.' });
+    next(error);
   }
 };

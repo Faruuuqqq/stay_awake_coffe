@@ -18,7 +18,7 @@ exports.createAddress = async (req, res) => {
     });
     res.status(201).json({ message: 'Address created successfully', addressId });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating address', error: error.message });
+    next(error);
   }
 }
 
@@ -36,7 +36,7 @@ exports.getAddressById = async (req, res) => {
 
     res.status(200).json(address);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching address', error: error.message });
+    next(error);
   }
 }
 
@@ -52,7 +52,7 @@ exports.getAddressesByUser = async (req, res) => {
     const addresses = await addressModel.getAddressesByUserId(userId);
     res.status(200).json(addresses);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching addresses', error: error.message });
+    next(error);
   }
 }
 
@@ -81,7 +81,7 @@ exports.updateAddress = async (req, res) => {
 
     res.status(200).json({ message: 'Address updated successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating address', error: error.message });
+    next(error);
   }
 };
 
@@ -104,6 +104,6 @@ exports.deleteAddress = async (req, res) => {
 
     res.status(200).json({ message: 'Address deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting address', error: error.message });
+    next(error);
   }
 }

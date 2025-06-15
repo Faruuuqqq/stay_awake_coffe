@@ -15,7 +15,7 @@ const shipmentRoutes = require("./routes/shipmentRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 
-const errorMiddleware = require("./middlewares/errorMiddleware");
+const { errorHandler } = require("./middlewares/errorMiddleware");
 const app = express();
 
 app.use(express.json());
@@ -38,7 +38,7 @@ app.use("/payment", paymentRoutes);
 app.use("/shipment", shipmentRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/addresses", addressRoutes);
-app.use(errorMiddleware);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {

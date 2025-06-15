@@ -8,7 +8,7 @@ exports.getAllCategories = async (req, res) => {
     // res.json(categories);
     res.render("category", { categories, products, title: 'Stay Awake Coffee - Categories' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
@@ -20,7 +20,7 @@ exports.getCategoryById = async (req, res) => {
     if (!category) return res.status(404).json({ error: 'Category not found' });
     res.json(category);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
@@ -32,7 +32,7 @@ exports.createCategory = async (req, res) => {
     const categoryId = await categoryModel.createCategory(name);
     res.status(201).json({ message: 'Category created', categoryId });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
@@ -46,7 +46,7 @@ exports.updateCategory = async (req, res) => {
     if (!updated) return res.status(404).json({ error: 'Category not found' });
     res.json({ message: 'Category updated' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
@@ -57,6 +57,6 @@ exports.deleteCategory = async (req, res) => {
     if (!deleted) return res.status(404).json({ error: 'Category not found' });
     res.json({ message: 'Category deleted' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };

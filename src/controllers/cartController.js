@@ -30,7 +30,7 @@ exports.getCart = async (req, res) => {
       title: 'Stay Awake Coffee - Cart'
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
@@ -62,8 +62,7 @@ exports.addToCart = async (req, res) => {
 
     res.status(200).json({ message: 'Item added to cart' });
   } catch (error) {
-    console.error("Error adding to cart:", error);
-    res.status(500).json({ message: 'Error adding to cart', error: error.message });
+    next(error);
   }
 };
 
@@ -82,7 +81,7 @@ exports.updateCartItem = async (req, res) => {
 
     res.json({ message: 'Quantity updated' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
@@ -100,7 +99,7 @@ exports.removeFromCart = async (req, res) => {
 
     res.json({ message: 'Cart item removed' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
@@ -114,6 +113,6 @@ exports.clearCart = async (req, res) => {
 
     res.json({ message: 'cleared cart' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };

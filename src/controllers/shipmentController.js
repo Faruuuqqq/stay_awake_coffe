@@ -11,7 +11,7 @@ exports.createShipment = async (req, res) => {
     const shipmentId = await shipmentModel.createShipment({ order_id, courier });
     res.status(400).json({ error: 'Shipment has been successfully created', shipmentId });  
   } catch (error) {
-    throw new Error('Database error: ' + error.message);
+    next(error);
   }
 };
 
@@ -23,7 +23,7 @@ exports.getShipmentByOrderId = async (req, res) => {
     if (!shipment) return res.status(404).json({ error: 'Shipment tidak ditemukan untuk order ini' });
     res.json(shipment);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
@@ -41,6 +41,6 @@ exports.updateShipmentStatus = async (req, res) => {
     if (!updated) return res.status(404).json({ error: 'Shipment not found' });
     res.json({ message: 'Status shipment has been updated'})
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };

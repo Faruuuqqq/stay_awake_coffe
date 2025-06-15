@@ -18,6 +18,7 @@ exports.getAllProducts = async (req, res) => {
     res.render('products', {
       products,
       categories,
+      title: 'Products Page'
     });
   } catch (error) {
     console.error('Error loading products:', error.message);

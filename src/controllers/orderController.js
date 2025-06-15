@@ -100,8 +100,7 @@ exports.getCheckoutPage = async (req, res) => {
     const checkoutData = await getCheckoutPageData(userId);
     res.render('checkout', checkoutData);
   } catch (error) {
-    console.error('Error loading checkout page:', error.message);
-    res.status(500).send('Internal Server Error');
+    next(error);
   }
 };
 
@@ -117,7 +116,7 @@ exports.getOrderById = async (req, res) => {
       success: null,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
@@ -127,7 +126,7 @@ exports.getOrdersByUser = async (req, res) => {
     const orders = await orderModel.getOrdersByUserId(userId);
     res.json(orders);
   } catch (error) {
-    throw new Error('Database error: ' + error.message);
+    next(error);
   }
 };
 
@@ -144,6 +143,6 @@ exports.updateOrderStatus = async (req, res) => {
     if (!updated) return res.status(404).json({ error: 'order not found' });
     res.json({ message: 'status order successfully updated' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };

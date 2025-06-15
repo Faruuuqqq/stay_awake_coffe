@@ -17,7 +17,7 @@ exports.createReview = async (req, res) => {
     });
     res.status(201).json({ message: 'Review created successfully', reviewId });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating review', error: error.message });   
+    next(error);  
   }
 }
 
@@ -27,7 +27,7 @@ exports.getReviewsByProductId = async (req, res) => {
     const reviews = await reviewModel.getReviewsByProductId(product_id);
     res.status(200).json(reviews);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching reviews', error: error.message });
+    next(error);
   }
 }
 
@@ -47,7 +47,7 @@ exports.deleteReview = async (req, res) => {
     await reviewModel.deleteReview(reviewId);
     res.status(200).json({ message: 'Review deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting review', error: error.message });
+    next(error);
   }
 
 }
