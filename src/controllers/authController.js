@@ -1,18 +1,16 @@
 // src/controllers/authController.js
-const userService = require('../services/userService'); // Mengimpor userService yang baru
+
+const userService = require('../services/userService');
 const { getCommonRenderData } = require('../utils/renderHelpers');
 
 const authController = {
     /**
      * Menampilkan halaman login.
-     * @param {Object} req - Objek request Express.
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
      */
     getLoginPage: async (req, res, next) => {
         try {
             const commonData = await getCommonRenderData(req.userId, { title: 'Login' });
-            res.render('login', { ...commonData });
+            res.render('login-register', { ...commonData, page: 'login' });
         } catch (error) {
             console.error('Error rendering login page:', error.message);
             next(error);
@@ -21,25 +19,19 @@ const authController = {
 
     /**
      * Menampilkan halaman register.
-     * @param {Object} req - Objek request Express.
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
      */
     getRegisterPage: async (req, res, next) => {
         try {
             const commonData = await getCommonRenderData(req.userId, { title: 'Register' });
-            res.render('register', { ...commonData });
+            res.render('login-register', { ...commonData, page: 'register' });
         } catch (error) {
             console.error('Error rendering register page:', error.message);
             next(error);
         }
     },
-
+    
     /**
-     * Melakukan proses registrasi pengguna.
-     * @param {Object} req - Objek request Express (req.body berisi username, email, password).
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
+     * Registrasi pengguna baru.
      */
     register: async (req, res, next) => {
         const { username, email, password } = req.body;
@@ -48,45 +40,55 @@ const authController = {
             res.status(201).json(result);
         } catch (error) {
             console.error('Error in authController.register:', error.message);
-            next(error); // Meneruskan error ke middleware error global
+            next(error);
         }
     },
 
     /**
-     * Melakukan proses login pengguna.
-     * @param {Object} req - Objek request Express (req.body berisi email, password).
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
+     * Login pengguna dan membuat HttpOnly Cookie.
      */
     login: async (req, res, next) => {
         const { email, password } = req.body;
         try {
             const result = await userService.login({ email, password });
-            // Anda mungkin ingin mengatur token di cookie di sini jika menggunakan server-side rendering/cookies
-            // res.cookie('jwt', result.token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-            res.status(200).json(result);
+
+            // 1. Buat cookie dengan nama 'authToken'
+            res.cookie('authToken', result.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 3600 * 1000, // 1 jam
+                path: '/'
+            });
+
+            // 2. Tentukan URL redirect berdasarkan peran pengguna
+            const redirectUrl = result.role === 'admin' ? '/admin/dashboard' : '/';
+
+            // 3. Kirim respons sukses beserta redirectUrl ke frontend
+            res.status(200).json({
+                status: 'success',
+                message: 'Login berhasil.',
+                redirectUrl: redirectUrl
+            });
+
         } catch (error) {
+            // Tangani error jika login gagal
             console.error('Error in authController.login:', error.message);
-            next(error); // Meneruskan error ke middleware error global
+            next(error); 
         }
     },
 
     /**
-     * Logout pengguna.
-     * @param {Object} req - Objek request Express.
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
+     * Logout pengguna dengan menghapus cookie dan redirect.
      */
     logout: (req, res, next) => {
         try {
-            // Hapus token dari cookie atau sisi klien
-            res.clearCookie('jwt'); // Jika menggunakan cookie
-            res.status(200).json({ status: 'success', message: 'Berhasil logout.' });
+            res.clearCookie('authToken');
+            res.redirect('/auth/login');
         } catch (error) {
             console.error('Error during logout:', error.message);
             next(error);
         }
-    }
+    },
 };
 
 module.exports = authController;

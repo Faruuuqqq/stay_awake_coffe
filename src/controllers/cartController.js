@@ -1,24 +1,28 @@
 // src/controllers/cartController.js
 const cartService = require('../services/cartService');
-const { getCommonRenderData } = require('../utils/renderHelpers'); // Untuk data render umum
+const { getCommonRenderData } = require('../utils/renderHelpers');
+const { ApiError } = require('../utils/ApiError'); // Pastikan ApiError diimpor
 
 const cartController = {
     /**
-     * Mendapatkan semua item dalam keranjang pengguna yang sedang login.
-     * @param {Object} req - Objek request Express (req.userId dari authMiddleware).
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
+     * Mendapatkan keranjang pengguna.
+     * Fungsi ini sekarang bisa merender halaman HTML atau mengirim data JSON
+     * tergantung pada URL yang diakses (/carts atau /api/carts).
      */
     getCart: async (req, res, next) => {
         try {
-            if (!req.userId) {
-                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
-            }
+            // Middleware 'protect' sudah memastikan req.userId ada.
             const result = await cartService.getCartItems(req.userId);
-            res.status(200).json(result);
-            // Jika ingin merender halaman keranjang:
-            // const commonData = await getCommonRenderData(req.userId, { title: 'Your Cart' });
-            // res.render('cart', { ...commonData, cart: result.data });
+
+            // Cek apakah ini permintaan API atau permintaan halaman
+            if (req.originalUrl.startsWith('/api/')) {
+                // Jika ya, kirim balasan JSON
+                return res.status(200).json(result);
+            } else {
+                // Jika tidak, render halaman EJS seperti biasa
+                const commonData = await getCommonRenderData(req.userId, { title: 'Keranjang Belanja' });
+                return res.render('cart', { ...commonData, cart: result.data });
+            }
         } catch (error) {
             console.error('Error in cartController.getCart:', error.message);
             next(error);
@@ -26,18 +30,12 @@ const cartController = {
     },
 
     /**
-     * Menambahkan produk ke keranjang atau memperbarui kuantitasnya.
-     * @param {Object} req - Objek request Express (req.userId, req.body: { productId, quantity }).
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
+     * Menambahkan item ke keranjang. Selalu merespons dengan JSON.
      */
     addItemToCart: async (req, res, next) => {
         try {
-            if (!req.userId) {
-                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
-            }
             const { productId, quantity } = req.body;
-            const result = await cartService.addOrUpdateCartItem(req.userId, { productId, quantity });
+            const result = await cartService.addItemToCart(req.userId, { productId, quantity });
             res.status(200).json(result);
         } catch (error) {
             console.error('Error in cartController.addItemToCart:', error.message);
@@ -46,18 +44,12 @@ const cartController = {
     },
 
     /**
-     * Memperbarui kuantitas item tertentu dalam keranjang.
-     * @param {Object} req - Objek request Express (req.userId, req.body: { productId, quantity }).
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
+     * Memperbarui kuantitas item di keranjang. Selalu merespons dengan JSON.
      */
     updateCartItemQuantity: async (req, res, next) => {
         try {
-            if (!req.userId) {
-                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
-            }
-            const { productId, quantity } = req.body; // Ambil productId dari body
-            const result = await cartService.updateCartItemQuantity(req.userId, productId, quantity);
+            const { productId, quantity } = req.body;
+            const result = await cartService.updateCartItem(req.userId, { productId, quantity });
             res.status(200).json(result);
         } catch (error) {
             console.error('Error in cartController.updateCartItemQuantity:', error.message);
@@ -66,17 +58,11 @@ const cartController = {
     },
 
     /**
-     * Menghapus item tertentu dari keranjang.
-     * @param {Object} req - Objek request Express (req.userId, req.params.productId).
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
+     * Menghapus item dari keranjang. Selalu merespons dengan JSON.
      */
     removeCartItem: async (req, res, next) => {
         try {
-            if (!req.userId) {
-                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
-            }
-            const { productId } = req.params; // Ambil productId dari params
+            const { productId } = req.params;
             const result = await cartService.removeCartItem(req.userId, productId);
             res.status(200).json(result);
         } catch (error) {
@@ -86,16 +72,10 @@ const cartController = {
     },
 
     /**
-     * Mengosongkan seluruh keranjang pengguna.
-     * @param {Object} req - Objek request Express (req.userId).
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
+     * Mengosongkan keranjang. Selalu merespons dengan JSON.
      */
     clearCart: async (req, res, next) => {
         try {
-            if (!req.userId) {
-                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
-            }
             const result = await cartService.clearCart(req.userId);
             res.status(200).json(result);
         } catch (error) {

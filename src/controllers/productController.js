@@ -1,106 +1,97 @@
 // src/controllers/productController.js
 const productService = require('../services/productService');
-const { getCommonRenderData } = require('../utils/renderHelpers'); // Tetap digunakan untuk data render umum
-const userModel = require('../models/userModel'); // Diperlukan untuk getProductById agar bisa mendapatkan user
+const { getCommonRenderData } = require('../utils/renderHelpers');
+const { ApiError } = require('../utils/ApiError');
 
 const productController = {
-    // Fungsi getAllProducts yang sebelumnya mengembalikan JSON, sekarang diganti ke getProductsPage
-    // Jika Anda masih butuh endpoint JSON untuk semua produk tanpa render HTML, bisa dibuat terpisah
-    // atau diadaptasi dari getAllProductsForPage di service.
-    // getAllProducts: async (req, res, next) => { /* ... */ }, // Dihapus atau diadaptasi
-
-    // Mengambil halaman produk dengan filter dan rendering
+    /**
+     * Menampilkan halaman produk.
+     * Logika filter dan paginasi yang tidak terpakai sudah dibersihkan.
+     */
     getProductsPage: async (req, res, next) => {
-        const { search, category, priceMin, priceMax, sort } = req.query;
-
         try {
-            const filters = {
-                search: search || '',
-                category: category || '',
-                priceMin: parseFloat(priceMin) || 0,
-                priceMax: parseFloat(priceMax) || 999999,
-                sort: sort || ''
-            };
+            // Memanggil service untuk mendapatkan semua data yang diperlukan untuk halaman produk.
+            const serviceResult = await productService.getAllProductsForPage({}, req.userId);
+            
+            // Mengambil data umum untuk rendering (info user, jumlah item di keranjang, dll.)
+            const commonData = await getCommonRenderData(req.userId, { title: 'Produk Kami - Stay Awake Coffee' });
 
-            const serviceResult = await productService.getAllProductsForPage(filters, req.userId); // Teruskan userId jika service butuh
-            const commonData = await getCommonRenderData(req.userId, { title: 'Stay Awake Coffee - Products' });
-
+            // Merender halaman 'products.ejs' dengan data yang diperlukan.
             res.render('products', {
                 ...commonData,
                 products: serviceResult.products,
                 categories: serviceResult.categories,
-                filters: serviceResult.filters
             });
         } catch (error) {
             console.error('Error loading products page:', error.message);
-            const commonData = await getCommonRenderData(req.userId, { title: 'Error' });
-            // Mengirimkan status 500 dan render halaman error atau halaman produk kosong
-            res.status(500).render('products', { ...commonData, products: [], categories: [], filters: {}, error: 'Failed to load products' });
+            next(error); // Teruskan error ke error handler utama
         }
     },
 
-    // Get product by ID (untuk detail halaman)
+    /**
+     * Mengambil detail produk berdasarkan ID untuk halaman detail.
+     */
     getProductById: async (req, res, next) => {
-        const id = req.params.id;
+        const { id } = req.params;
         try {
-            // Mengambil data user di controller karena ini terkait sesi/autentikasi request
-            let user = null;
-            if (req.userId) {
-                user = await userModel.findById(req.userId); // Asumsi ada method findById di userModel
-            }
-
-            const serviceResult = await productService.getProductDetail(id); // userId mungkin tidak diperlukan di sini
-            
-            // Menggabungkan data dari service dengan data commonRenderData dan user
+            const serviceResult = await productService.getProductDetail(id);
             const commonData = await getCommonRenderData(req.userId, { title: serviceResult.product.name });
 
             res.render('product-detail', {
                 ...commonData,
                 product: serviceResult.product,
                 categories: serviceResult.categories,
-                user: user, // Teruskan user yang sudah diambil dari model
             });
         } catch (error) {
-            // Periksa statusCode dari error yang dilempar dari service
+            // Jika produk tidak ditemukan (error 404), tampilkan halaman 404.
             if (error.statusCode === 404) {
-                const commonData = await getCommonRenderData(req.userId, { title: 'Not Found' });
-                return res.status(404).render('404', { ...commonData, message: error.message }); // Render halaman 404
+                const commonData = await getCommonRenderData(req.userId, { title: 'Produk Tidak Ditemukan' });
+                return res.status(404).render('error', { ...commonData, message: error.message, error: { status: 404 } });
             }
-            console.error('Error fetching product detail:', error.message);
-            next(error); // Meneruskan error lainnya ke middleware error global
+            console.error(`Error fetching product detail for ID ${id}:`, error.message);
+            next(error);
         }
     },
 
-    // Create new product (admin only)
+    /**
+     * Membuat produk baru (hanya untuk admin).
+     */
     createProduct: async (req, res, next) => {
-        const { category_ids, ...productData } = req.body; // Pisahkan category_ids dari productData
+        const { category_ids, ...productData } = req.body;
         try {
             const result = await productService.createProduct(productData, category_ids);
-            res.status(201).json(result); // result sudah berisi message dan productId dari service
+            res.status(201).json(result);
         } catch (error) {
-            next(error); // Meneruskan error ke middleware error global
+            console.error('Error in productController.createProduct:', error.message);
+            next(error);
         }
     },
 
-    // Update product (admin only)
+    /**
+     * Memperbarui produk (hanya untuk admin).
+     */
     updateProduct: async (req, res, next) => {
-        const id = req.params.id;
+        const { id } = req.params;
         const { category_ids, ...productData } = req.body;
         try {
             const result = await productService.updateProduct(id, productData, category_ids);
             res.status(200).json(result);
         } catch (error) {
+            console.error(`Error in productController.updateProduct for ID ${id}:`, error.message);
             next(error);
         }
     },
 
-    // Delete product (admin only)
+    /**
+     * Menghapus produk (hanya untuk admin).
+     */
     deleteProduct: async (req, res, next) => {
-        const id = req.params.id;
+        const { id } = req.params;
         try {
             const result = await productService.deleteProduct(id);
             res.status(200).json(result);
         } catch (error) {
+            console.error(`Error in productController.deleteProduct for ID ${id}:`, error.message);
             next(error);
         }
     }

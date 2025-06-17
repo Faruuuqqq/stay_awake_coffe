@@ -1,6 +1,8 @@
 // src/controllers/userController.js
 const userService = require('../services/userService');
 const { getCommonRenderData } = require('../utils/renderHelpers'); // Untuk data render umum
+const userModel = require('../models/userModel'); // Untuk mengambil data user jika diperlukan di render
+const { ApiError } = require('../utils/ApiError'); // Pastikan ini diimpor
 
 const userController = {
     /**
