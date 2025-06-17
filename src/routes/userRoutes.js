@@ -1,25 +1,23 @@
+// src/routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/authController');
-const authMiddleware = require('../middlewares/authMiddleware');
+const userController = require('../controllers/userController'); // Memastikan impor ini benar
+const { identifyUser, protect } = require('../middlewares/authMiddleware'); // Untuk melindungi rute
+const adminMiddleware = require('../middlewares/adminMiddleware'); // Untuk rute khusus admin
 
-// Public routes
-router.get('/login-register', (req, res) => {
-  const successMsg = req.query.success || null;
-  res.render('login-register', { error: null, success: successMsg, formData: {} });
-});
+// Rute Pengguna Biasa (Membutuhkan Autentikasi)
+router.get('/me', identifyUser, identifyUser, userController.getMyProfile); // Mendapatkan profil sendiri
+router.put('/me', identifyUser, userController.updateMyProfile); // Memperbarui profil sendiri
+router.put('/me/password', identifyUser, userController.updateMyPassword); // Memperbarui password sendiri
+router.delete('/me', identifyUser, userController.deleteMyAccount); // Menghapus akun sendiri
 
-router.get('/forgot-password', (req, res) => {
-  res.render('forgot-password', { error: null, success: null, formData: {} });
-});
-
-router.post('/register', authController.register);
-router.post('/login', authController.login);
-router.post('/logout', authController.logout);
-
-// Protected routes
-router.post('/change-password', authMiddleware, authController.changePassword);
-router.get('/account', authMiddleware, authController.getAccountPage);
-router.put('/update-profile', authMiddleware, authController.updateProfile);
+// Rute Admin (Membutuhkan Autentikasi dan Otorisasi Admin)
+// Catatan: Pastikan adminMiddleware Anda bekerja dengan benar dan ditempatkan setelah identifyUser
+router.get('/', identifyUser, protect, adminMiddleware, userController.getAllUsers); // Mendapatkan semua pengguna
+router.get('/:id', identifyUser,protect, adminMiddleware, userController.getUserProfileById); // Mendapatkan profil pengguna berdasarkan ID
+router.put('/:id', identifyUser, protect, adminMiddleware, userController.updateUserProfileById); // Memperbarui profil pengguna berdasarkan ID
+router.put('/:id/role', identifyUser, protect, adminMiddleware, userController.updateUserRole); // Memperbarui peran pengguna
+router.delete('/:id', identifyUser, protect, adminMiddleware, userController.deleteUserById); // Menghapus pengguna berdasarkan ID
 
 module.exports = router;
+

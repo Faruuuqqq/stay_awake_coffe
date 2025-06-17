@@ -1,15 +1,17 @@
+// src/routes/categoryRoutes.js
 const express = require('express');
 const router = express.Router();
 const categoryController = require('../controllers/categoryController');
-const authMiddleware = require('../middlewares/authMiddleware');
+const { protect } = require('../middlewares/authMiddleware'); // <-- Perubahan di sini
+const adminMiddleware = require('../middlewares/adminMiddleware'); // Asumsi admin middleware juga ada
 
-// Public routes
+// Rute Publik (siapa pun bisa melihat kategori)
 router.get('/', categoryController.getAllCategories);
 router.get('/:id', categoryController.getCategoryById);
 
-// Admin routes
-router.post('/', authMiddleware, categoryController.createCategory);
-router.put('/:id', authMiddleware, categoryController.updateCategory);
-router.delete('/:id', authMiddleware, categoryController.deleteCategory);
+// Rute Admin (membutuhkan autentikasi dan otorisasi admin)
+router.post('/', protect, adminMiddleware, categoryController.createCategory); // <-- Perubahan di sini
+router.put('/:id', protect, adminMiddleware, categoryController.updateCategory); // <-- Perubahan di sini
+router.delete('/:id', protect, adminMiddleware, categoryController.deleteCategory); // <-- Perubahan di sini
 
 module.exports = router;

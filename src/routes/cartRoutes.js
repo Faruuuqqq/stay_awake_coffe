@@ -1,16 +1,17 @@
+// src/routes/cartRoutes.js
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middlewares/authMiddleware');
 const cartController = require('../controllers/cartController');
+const { protect } = require('../middlewares/authMiddleware'); // <-- Perubahan di sini
 
-router.get('/', authMiddleware, cartController.getCart);
+// Semua rute di sini memerlukan otentikasi
+router.use(protect); // <-- Perubahan di sini
 
-router.post('/add', authMiddleware, cartController.addToCart);
-
-router.put('/update', authMiddleware, cartController.updateCartItem);
-
-router.delete('/remove', authMiddleware, cartController.removeFromCart);
-
-router.delete('/clear', authMiddleware, cartController.clearCart);
+// Rute untuk keranjang belanja pengguna yang sedang login
+router.get('/', cartController.getCart);
+router.post('/', cartController.addItemToCart);
+router.put('/', cartController.updateCartItemQuantity);
+router.delete('/:productId', cartController.removeCartItem);
+router.delete('/', cartController.clearCart);
 
 module.exports = router;

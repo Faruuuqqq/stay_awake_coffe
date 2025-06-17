@@ -1,16 +1,18 @@
+// src/routes/shipmentRoutes.js
 const express = require('express');
 const router = express.Router();
 const shipmentController = require('../controllers/shipmentController');
-const authMiddleware = require('../middlewares/authMiddleware');
+const { protect } = require('../middlewares/authMiddleware'); // <-- Perubahan di sini
 const adminMiddleware = require('../middlewares/adminMiddleware');
 
-// Buat shipment (biasanya admin)
-router.post('/', authMiddleware, adminMiddleware, shipmentController.createShipment);
+// Semua rute di sini memerlukan login
+router.use(protect); // <-- Perubahan di sini
 
-// Cek status shipment berdasar order_id
-router.get('/order/:id', authMiddleware, shipmentController.getShipmentByOrderId);
+// Rute Pengguna Biasa
+router.get('/order/:orderId', shipmentController.getShipmentByOrderId);
 
-// Update status shipment (admin)
-router.put('/:id', authMiddleware, adminMiddleware, shipmentController.updateShipmentStatus);
+// Rute Admin (membutuhkan otorisasi admin tambahan)
+router.post('/', adminMiddleware, shipmentController.createShipment);
+router.put('/:id/status', adminMiddleware, shipmentController.updateShipmentStatus);
 
 module.exports = router;

@@ -1,16 +1,19 @@
+// src/routes/paymentRoutes.js
 const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/paymentController');
-const authMiddleware = require('../middlewares/authMiddleware');
+const { protect } = require('../middlewares/authMiddleware'); // <-- Perubahan di sini
+const adminMiddleware = require('../middlewares/adminMiddleware');
 
-// Simulasi buat pembayaran order
-router.post('/', authMiddleware, paymentController.createPayment);
-router.get('/', authMiddleware, paymentController.getPaymentPage);
+// Rute yang mungkin publik (misal: webhook dari payment gateway)
+router.post('/', paymentController.createPayment);
 
-// Lihat pembayaran berdasarkan ID payment
-router.get('/:id', authMiddleware, paymentController.getPaymentById);
+// Rute Pengguna Biasa (Membutuhkan Autentikasi)
+router.get('/me', protect, paymentController.getMyPayments); // <-- Perubahan di sini
+router.get('/orders/:orderId', protect, paymentController.getPaymentByOrderId); // <-- Perubahan di sini
 
-// Lihat pembayaran berdasarkan ID order
-router.get('/order/:id', authMiddleware, paymentController.getPaymentByOrderId);
+// Rute Admin (Membutuhkan Autentikasi dan Otorisasi Admin)
+router.get('/:id', protect, adminMiddleware, paymentController.getPaymentById); // <-- Perubahan di sini
+router.put('/:id/status', protect, adminMiddleware, paymentController.updatePaymentStatus); // <-- Perubahan di sini
 
 module.exports = router;
