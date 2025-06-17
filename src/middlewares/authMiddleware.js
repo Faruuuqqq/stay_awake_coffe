@@ -1,20 +1,61 @@
+// src/middlewares/authMiddleware.js
+
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET;
+const { UnauthorizedError } = require('../utils/ApiError');
+const userModel = require('../models/userModel');
 
-module.exports = (req, res, next) => {
-  const token = req.cookies.token;
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_fallback';
 
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-
-  try {
-    // Verifikasi token dan decode untuk mendapatkan userId
-    const decoded = jwt.verify(token, JWT_SECRET);
-    console.log('Decoded payload:', decoded);
-
-    req.userId = decoded.userId;
+/**
+ * Middleware BARU: identifyUser
+ * Tugasnya hanya mengidentifikasi user dari cookie jika ada, tanpa memblokir request.
+ * Akan digunakan secara global di app.js.
+ */
+const identifyUser = async (req, res, next) => {
+    const token = req.cookies.authToken;
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, JWT_SECRET);
+            const user = await userModel.findById(decoded.userId);
+            if (user) {
+                req.userId = user.user_id;
+                req.user = user;
+            }
+        } catch (error) {
+            res.clearCookie('authToken');
+            console.log('IdentifyUser Middleware: Invalid token found and cleared.');
+        }
+    }
     next();
-  } catch (error) {
-    console.error('Token verification error:', error);
-    return res.status(401).json({ error: 'Invalid or expired token' });
-  }
+};
+
+
+/**
+ * Middleware: protect
+ * Tugasnya MEMBLOKIR akses jika user tidak login.
+ * Digunakan untuk halaman spesifik seperti /profile, /checkout.
+ */
+const protect = (req, res, next) => {
+    // Middleware ini berasumsi 'identifyUser' sudah berjalan sebelumnya.
+    if (req.user) {
+        // Jika user sudah teridentifikasi oleh identifyUser, lanjutkan.
+        return next();
+    }
+
+    // Jika tidak ada user, tangani berdasarkan tipe request.
+    if (req.originalUrl.startsWith('/api/')) {
+        // Untuk request API, kirim balasan error JSON, JANGAN redirect.
+        return res.status(401).json({
+            status: 'error',
+            message: 'Akses ditolak. Anda harus login untuk mengakses sumber daya ini.'
+        });
+    } else {
+        // Untuk request HALAMAN, lakukan redirect ke halaman login.
+        return res.redirect('/auth/login');
+    }
+};
+
+module.exports = {
+    identifyUser,
+    protect
 };
