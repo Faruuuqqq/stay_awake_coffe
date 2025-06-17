@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %></title>
-    <meta name="description" content="Login atau daftar akun baru di Stay Awake Coffee. Akses riwayat pesanan, kelola profil, dan nikmati belanja kopi personal.">
-    <meta name="keywords" content="login, daftar, registrasi, akun, masuk, Stay Awake Coffee, kopi">
+    <meta name="description" content="Login ke akun Stay Awake Coffee Anda. Akses riwayat pesanan, kelola profil, dan daftar alamat pengiriman Anda.">
+    <meta name="keywords" content="login, masuk, akun, Stay Awake Coffee, kopi">
 
     <link href="/assets/img/favicon.png" rel="icon">
     <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
@@ -22,11 +22,11 @@
     <link href="/assets/vendor/drift-zoom/drift-basic.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.2/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    
+
     <link href="/assets/css/main.css" rel="stylesheet">
 </head>
 <body class="login-register-page">
-    <%- include('./partials/header.ejs', { user: user, cartItemCount: cartItemCount }) %>
+    <%- include('partials/header.ejs', { user: user, cartItemCount: cartItemCount }) %>
 
     <main id="main">
         <section id="login-register" class="login-register section">
@@ -57,6 +57,10 @@
                                             <label for="loginPassword" class="form-label">Password</label>
                                             <input type="password" class="form-control" id="loginPassword" name="password" required>
                                         </div>
+                                        <div class="mb-3 form-check">
+                                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                                            <label class="form-check-label" for="rememberMe">Remember Me</label>
+                                        </div>
                                         <button type="submit" class="btn btn-primary w-100">Login</button>
                                         <div class="text-center mt-3">
                                             <a href="#" class="forgot-password">Forgot Password?</a>
@@ -64,25 +68,7 @@
                                     </form>
                                 </div>
                                 <div class="tab-pane fade" id="register-content" role="tabpanel" aria-labelledby="register-tab">
-                                    <form id="register-form" class="mt-4">
-                                        <div class="mb-3">
-                                            <label for="registerUsername" class="form-label">Username</label>
-                                            <input type="text" class="form-control" id="registerUsername" name="username" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="registerEmail" class="form-label">Email Address</label>
-                                            <input type="email" class="form-control" id="registerEmail" name="email" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="registerPassword" class="form-label">Password</label>
-                                            <input type="password" class="form-control" id="registerPassword" name="password" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="confirmPassword" class="form-label">Confirm Password</label>
-                                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
-                                        </div>
-                                        <button type="submit" class="btn btn-primary w-100">Register</button>
-                                    </form>
+                                    <p class="text-center mt-4">Pindah ke tab Register untuk mendaftar.</p>
                                 </div>
                             </div>
                         </div>
@@ -92,7 +78,7 @@
         </section>
     </main>
 
-    <%- include('./partials/footer.ejs') %>
+    <%- include('partials/footer.ejs') %>
 
     <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="/assets/vendor/aos/aos.js"></script>
@@ -103,11 +89,79 @@
     <script src="/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
     <script src="/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
     <script src="/assets/vendor/drift-zoom/Drift.min.js"></script>
-
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.2/dist/sweetalert2.all.min.js"></script>
 
     <script src="/assets/js/main.js"></script>
 
-    </body>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (event) => {
+                    event.preventDefault(); // Mencegah pengiriman form default
+
+                    const email = document.getElementById('loginEmail').value;
+                    const password = document.getElementById('loginPassword').value;
+
+                    try {
+                        const response = await fetch('/auth/login', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ email, password })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            // Asumsi backend mengembalikan JWT token di data.token
+                            if (data.token) {
+                                localStorage.setItem('jwtToken', data.token); // Simpan token di localStorage
+                            }
+                            window.showAlert(data.message || 'Login berhasil!', 'success');
+                            // Redirect ke halaman dashboard atau home setelah login berhasil
+                            setTimeout(() => {
+                                window.location.href = '/'; // Arahkan ke halaman beranda
+                            }, 1500);
+                        } else {
+                            // Tampilkan pesan error dari backend
+                            window.showAlert(data.message || 'Login gagal. Email atau password salah.', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error during login:', error);
+                        window.showAlert('Terjadi kesalahan jaringan atau server.', 'error');
+                    }
+                });
+            }
+
+            // Arahkan ke tab login jika URL memiliki hash #login-tab (default)
+            // Arahkan ke tab register jika URL memiliki hash #register-tab
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            if (tabParam === 'register') {
+                const registerTabBtn = document.getElementById('register-tab');
+                const registerContent = document.getElementById('register-content');
+                if (registerTabBtn && registerContent) {
+                    new bootstrap.Tab(registerTabBtn).show();
+                }
+            } else {
+                const loginTabBtn = document.getElementById('login-tab');
+                const loginContent = document.getElementById('login-content');
+                if (loginTabBtn && loginContent) {
+                    new bootstrap.Tab(loginTabBtn).show();
+                }
+            }
+
+            // Inisialisasi AOS (sudah di main.js)
+            // if (typeof AOS !== 'undefined') { AOS.init(); }
+
+            // Panggil updateCartItemCount saat DOM fully loaded
+            if (typeof window.updateCartItemCount === 'function') {
+                window.updateCartItemCount();
+            }
+        });
+    </script>
+</body>
 </html>
