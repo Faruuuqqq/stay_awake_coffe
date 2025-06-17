@@ -1,12 +1,13 @@
 // src/services/userService.js
 const userModel = require('../models/userModel');
+const addressModel = require('../models/addressModel'); // Import addressModel jika perlu mengambil/memperbarui alamat
 const argon2 = require('argon2');
 const Joi = require('joi');
 const jwt = require('jsonwebtoken'); // Untuk membuat JWT
 const { ApiError, BadRequestError, NotFoundError, UnauthorizedError, ForbiddenError } = require('../utils/ApiError');
 
 // Ambil secret key dari environment variables (pastikan ini ada di .env Anda)
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key'; // Ganti dengan secret key yang kuat dan aman
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_fallback'; // Tambahkan fallback yang jelas
 
 // Skema Validasi Joi
 const registerSchema = Joi.object({
@@ -52,12 +53,8 @@ const loginSchema = Joi.object({
 const updateProfileSchema = Joi.object({
     username: Joi.string().trim().min(3).max(50),
     email: Joi.string().trim().email(),
-    phone_number: Joi.string().trim().pattern(/^[0-9]{10,15}$/).allow('').messages({
-        'string.pattern.base': 'Nomor telepon harus berupa angka dan antara 10-15 digit.'
-    }),
-    address: Joi.string().trim().max(255).allow('')
-}).min(1).messages({ // Setidaknya satu field harus ada untuk update
-    'object.min': 'Setidaknya satu field (username, email, phone_number, atau address) harus disediakan untuk update profil.'
+}).min(1).messages({
+    'object.min': 'Setidaknya satu field (username atau email) harus disediakan untuk update profil.'
 });
 
 
@@ -117,7 +114,6 @@ class UserService {
             };
         } catch (error) {
             console.error('Error in UserService.register:', error.message);
-            // Jika error sudah dari ApiError (misal BadRequestError dari atas), re-throw
             if (error instanceof ApiError) throw error;
             throw new ApiError(500, 'Gagal mendaftar pengguna.');
         }
@@ -139,30 +135,30 @@ class UserService {
 
         try {
             const user = await userModel.findByEmail(value.email);
-            if (!user) {
+            if (!user || !user.password) {
                 throw new UnauthorizedError('Email atau password salah.');
             }
 
-            const isPasswordValid = await argon2.verify(user.password_hash, value.password);
+            const isPasswordValid = await argon2.verify(user.password, value.password);
             if (!isPasswordValid) {
                 throw new UnauthorizedError('Email atau password salah.');
             }
 
             // Buat token JWT
+            const tokenPayload = { userId: user.user_id, email: user.email, role: user.role, username: user.name };
+            console.log('UserService Debug: JWT_SECRET being used for signing:', JWT_SECRET); // Log SECRET
+            console.log('UserService Debug: JWT Payload:', tokenPayload); // Log payload
             const token = jwt.sign(
-                { userId: user.user_id, email: user.email, role: user.role },
+                tokenPayload,
                 JWT_SECRET,
                 { expiresIn: '1h' } // Token berlaku 1 jam
             );
 
-            // Jangan kirim hash password ke frontend
             const userData = {
                 userId: user.user_id,
-                username: user.username,
+                username: user.name,
                 email: user.email,
                 role: user.role,
-                phone_number: user.phone_number,
-                address: user.address
             };
 
             return {
@@ -173,7 +169,7 @@ class UserService {
             };
         } catch (error) {
             console.error('Error in UserService.login:', error.message);
-            if (error instanceof ApiError) throw error; // Re-throw custom errors
+            if (error instanceof ApiError) throw error;
             throw new ApiError(500, 'Gagal login.');
         }
     }
@@ -199,6 +195,7 @@ class UserService {
 
     /**
      * Mengambil detail profil pengguna berdasarkan ID.
+     * Menggabungkan data dari tabel `users` dan `addresses`.
      * @param {number} userId - ID pengguna.
      * @returns {Promise<Object>} Objek berisi status, pesan, dan data pengguna.
      * @throws {BadRequestError} Jika ID pengguna tidak valid.
@@ -216,10 +213,19 @@ class UserService {
             if (!user) {
                 throw new NotFoundError('Pengguna tidak ditemukan.');
             }
+            const addresses = await addressModel.findByUserId(userId);
+            const userData = {
+                ...user,
+                phone_number: addresses && addresses.length > 0 ? addresses[0].phone : null,
+                address: addresses && addresses.length > 0 ? addresses[0].address : null,
+                city: addresses && addresses.length > 0 ? addresses[0].city : null,
+                postal_code: addresses && addresses.length > 0 ? addresses[0].postal_code : null,
+            };
+
             return {
                 status: 'success',
                 message: 'Profil pengguna berhasil diambil.',
-                data: user
+                data: userData
             };
         } catch (error) {
             console.error('Error in UserService.getUserProfile:', error.message);
@@ -230,8 +236,10 @@ class UserService {
 
     /**
      * Memperbarui profil pengguna.
+     * Sekarang hanya memperbarui nama dan email di tabel 'users'.
+     * Pembaruan nomor telepon dan alamat harus dilakukan melalui AddressService.
      * @param {number} userId - ID pengguna yang akan diperbarui.
-     * @param {Object} updateData - Data profil yang akan diperbarui.
+     * @param {Object} updateData - Data profil yang akan diperbarui (username, email).
      * @returns {Promise<Object>} Objek berisi status dan pesan.
      * @throws {BadRequestError} Jika data update tidak valid atau email sudah terdaftar.
      * @throws {NotFoundError} Jika pengguna tidak ditemukan.
@@ -249,15 +257,14 @@ class UserService {
         }
 
         try {
-            // Jika email akan diubah, cek duplikasi email
             if (value.email) {
                 const existingUser = await userModel.findByEmail(value.email);
-                if (existingUser && existingUser.user_id !== userId) { // Pastikan bukan pengguna itu sendiri
+                if (existingUser && existingUser.user_id !== userId) {
                     throw new BadRequestError('Email sudah terdaftar untuk pengguna lain.');
                 }
             }
 
-            const updated = await userModel.updateProfile(userId, value);
+            const updated = await userModel.updateProfile(userId, { username: value.username, email: value.email });
             if (!updated) {
                 throw new NotFoundError('Pengguna tidak ditemukan.');
             }
@@ -293,12 +300,17 @@ class UserService {
         }
 
         try {
-            const user = await userModel.findById(userId); // Ambil data user lengkap termasuk hash password
+            const user = await userModel.findById(userId); 
             if (!user) {
                 throw new NotFoundError('Pengguna tidak ditemukan.');
             }
 
-            const isOldPasswordValid = await argon2.verify(user.password_hash, value.oldPassword);
+            const userWithPassword = await userModel.findByEmail(user.email); 
+            if (!userWithPassword || !userWithPassword.password) {
+                throw new ApiError(500, 'Kesalahan internal: Password hash pengguna tidak dapat diambil.');
+            }
+
+            const isOldPasswordValid = await argon2.verify(userWithPassword.password, value.oldPassword);
             if (!isOldPasswordValid) {
                 throw new BadRequestError('Password lama salah.');
             }

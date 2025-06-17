@@ -12,7 +12,8 @@ class AppService {
      */
     async getHomepageData() {
         try {
-            const products = await productModel.getAllProducts(); // Atau findProductsForHomepage jika ada
+            // FIX: Mengubah productModel.getAllProducts() menjadi productModel.findAll()
+            const products = await productModel.findAll(); // Mengambil semua produk dari model
             const categories = await categoryModel.getAllCategories();
 
             // Anda bisa menambahkan logika bisnis di sini jika ada,
