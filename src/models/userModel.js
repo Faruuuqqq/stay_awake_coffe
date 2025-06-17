@@ -12,7 +12,8 @@ const User = {
      */
     findById: async (id) => {
         try {
-            const [rows] = await db.execute('SELECT user_id, username, email, role, phone_number, address FROM users WHERE user_id = ?', [id]);
+            // FIX: Menghapus phone_number dan address karena tidak ada di tabel users
+            const [rows] = await db.execute('SELECT user_id, name, email, role FROM users WHERE user_id = ?', [id]);
             return rows[0] || null;
         } catch (error) {
             console.error(`Error fetching user by ID ${id} from DB:`, error.message);
@@ -22,14 +23,16 @@ const User = {
 
     /**
      * Mengambil pengguna berdasarkan email.
-     * Mengembalikan semua kolom termasuk password_hash untuk tujuan verifikasi login.
+     * Mengembalikan semua kolom termasuk password untuk tujuan verifikasi login.
      * @param {string} email - Email pengguna.
      * @returns {Promise<Object|null>} Objek pengguna lengkap jika ditemukan, null jika tidak.
      * @throws {Error} Jika terjadi kesalahan database.
      */
-    findByEmail: async (email) => { // Mengganti getUserBymil menjadi findByEmail
+    findByEmail: async (email) => {
         try {
-            const [rows] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
+            // FIX: Menghapus phone_number dan address karena tidak ada di tabel users
+            // FIX: Memastikan kolom 'password' dipilih untuk verifikasi hash
+            const [rows] = await db.execute('SELECT user_id, name, email, role, password FROM users WHERE email = ?', [email]);
             return rows[0] || null;
         } catch (error) {
             console.error(`Error fetching user by email ${email} from DB:`, error.message);
@@ -46,8 +49,9 @@ const User = {
      */
     create: async ({ username, email, hashedPassword, role = 'user' }) => {
         try {
+            // Menggunakan 'name' dan 'password' sesuai skema terbaru
             const [result] = await db.execute(
-                'INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)',
+                `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`,
                 [username, email, hashedPassword, role]
             );
             return result.insertId;
@@ -64,11 +68,13 @@ const User = {
      * @returns {Promise<boolean>} True jika pengguna berhasil diperbarui, false jika tidak ditemukan.
      * @throws {Error} Jika terjadi kesalahan database.
      */
-    updateProfile: async (id, { username, email, phone_number, address }) => { // Mengganti updateUserProfile menjadi updateProfile
+    updateProfile: async (id, { username, email }) => { // FIX: Menghapus phone_number dan address dari parameter update
         try {
+            // FIX: Menghapus phone_number dan address dari query UPDATE karena tidak ada di tabel users
+            // Asumsi hanya username dan email yang diupdate di tabel users
             const [result] = await db.execute(
-                'UPDATE users SET username = ?, email = ?, phone_number = ?, address = ? WHERE user_id = ?',
-                [username, email, phone_number, address, id]
+                'UPDATE users SET name = ?, email = ? WHERE user_id = ?',
+                [username, email, id]
             );
             return result.affectedRows > 0;
         } catch (error) {
@@ -85,10 +91,11 @@ const User = {
      * @returns {Promise<boolean>} True jika password berhasil diperbarui, false jika tidak ditemukan.
      * @throws {Error} Jika terjadi kesalahan database.
      */
-    updatePassword: async (id, hashedPassword) => { // Mengganti updateUserPassword menjadi updatePassword
+    updatePassword: async (id, hashedPassword) => {
         try {
+            // Menggunakan 'password' sesuai skema
             const [result] = await db.execute(
-                'UPDATE users SET password_hash = ? WHERE user_id = ?',
+                'UPDATE users SET password = ? WHERE user_id = ?',
                 [hashedPassword, id]
             );
             return result.affectedRows > 0;
@@ -104,7 +111,7 @@ const User = {
      * @returns {Promise<boolean>} True jika pengguna berhasil dihapus, false jika tidak ditemukan.
      * @throws {Error} Jika terjadi kesalahan database.
      */
-    delete: async (id) => { // Mengganti deleteUser menjadi delete
+    delete: async (id) => {
         try {
             const [result] = await db.execute('DELETE FROM users WHERE user_id = ?', [id]);
             return result.affectedRows > 0;
@@ -119,9 +126,10 @@ const User = {
      * @returns {Promise<Array>} Array objek pengguna tanpa hash password.
      * @throws {Error} Jika terjadi kesalahan database.
      */
-    findAll: async () => { // Mengganti getAllUsers menjadi findAll
+    findAll: async () => {
         try {
-            const [rows] = await db.execute('SELECT user_id, username, email, role, phone_number, address FROM users ORDER BY user_id ASC');
+            // FIX: Menghapus phone_number dan address karena tidak ada di tabel users
+            const [rows] = await db.execute('SELECT user_id, name, email, role FROM users ORDER BY user_id ASC');
             return rows;
         } catch (error) {
             console.error('Error fetching all users from DB:', error.message);

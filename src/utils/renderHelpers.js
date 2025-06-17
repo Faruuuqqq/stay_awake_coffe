@@ -23,14 +23,14 @@ async function getCommonRenderData(userId, reqBody = {}) {
   if (userId) {
     user = await userModel.findById(userId);
     if (user) {
-      orders = await orderModel.getOrdersByUserId(userId);
-      addresses = await addressModel.getAddressesByUserId(userId);
-      payments = await paymentModel.getPaymentByUserId(userId);
+      orders = await orderModel.findById(userId);
+      addresses = await addressModel.findById(userId);
+      payments = await paymentModel.findById(userId);
 
       // Ambil jumlah item di keranjang untuk header
-      const cart = await cartModel.getCartByUserId(userId);
+      const cart = await cartModel.findByUserId(userId);
       if (cart) {
-        const items = await cartModel.getCartItems(cart.cart_id);
+        const items = await cartModel.findItemsByCartId(cart.cart_id);
         cartItemCount = items.length;
       }
   }
