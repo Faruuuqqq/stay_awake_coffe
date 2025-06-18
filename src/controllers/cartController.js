@@ -35,7 +35,7 @@ const cartController = {
     addItemToCart: async (req, res, next) => {
         try {
             const { productId, quantity } = req.body;
-            const result = await cartService.addItemToCart(req.userId, { productId, quantity });
+            const result = await cartService.addOrUpdateCartItem(req.userId, { productId, quantity });
             res.status(200).json(result);
         } catch (error) {
             console.error('Error in cartController.addItemToCart:', error.message);

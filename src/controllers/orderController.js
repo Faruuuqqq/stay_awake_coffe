@@ -1,70 +1,120 @@
 // src/controllers/orderController.js
 const orderService = require('../services/orderService');
-const { getCommonRenderData } = require('../utils/renderHelpers'); // Untuk data render umum
-const userModel = require('../models/userModel'); // Untuk mengambil data user jika diperlukan di render
+const cartService = require('../services/cartService');
+const addressService = require('../services/addressService');
+const { getCommonRenderData } = require('../utils/renderHelpers');
+const { ApiError } = require('../utils/ApiError');
 
 const orderController = {
     /**
-     * Membuat pesanan baru dari keranjang pengguna yang sedang login.
-     * @param {Object} req - Objek request Express (req.userId dari authMiddleware, req.body: { addressId }).
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
+     * FUNGSI BARU: Menampilkan halaman checkout.
+     * Mengambil data keranjang dan alamat sebelum merender halaman.
+     */
+    getCheckoutPage: async (req, res, next) => {
+        try {
+            const userId = req.userId;
+            if (!userId) {
+                // Sebenarnya middleware 'protect' sudah menangani ini, tapi ini sebagai pengaman tambahan.
+                return res.redirect('/auth/login');
+            }
+
+            // 1. Ambil data dari berbagai service
+            const cartResult = await cartService.getCartItems(userId);
+            const addressResult = await addressService.getAddressesByUserId(userId);
+            const commonData = await getCommonRenderData(userId, { title: 'Checkout' });
+
+            const items = cartResult.data ? cartResult.data.items : [];
+
+            // 2. Jika keranjang kosong, redirect kembali ke halaman keranjang
+            if (!items || items.length === 0) {
+                return res.redirect('/carts?error=Keranjang Anda kosong, tidak bisa melanjutkan ke checkout.');
+            }
+
+            // 3. Render halaman checkout dengan semua data yang diperlukan
+            res.render('checkout', {
+                ...commonData,
+                items: items,
+                totalPrice: cartResult.data.totalPrice,
+                addresses: addressResult.data,
+                error: req.query.error || null, // Untuk menampilkan pesan error jika ada
+                success: req.query.success || null
+            });
+
+        } catch (error) {
+            console.error('Error getting checkout page:', error.message);
+            next(error);
+        }
+    },
+
+    /**
+     * Membuat pesanan baru dari form checkout.
      */
     createOrder: async (req, res, next) => {
         try {
-            if (!req.userId) {
-                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
+            const userId = req.userId;
+            const { addressId, newAddress_phone, newAddress_address, newAddress_city, newAddress_postal_code } = req.body;
+            let finalAddressId = addressId;
+
+            if (addressId === 'new') {
+                const newAddressData = { phone: newAddress_phone, address: newAddress_address, city: newAddress_city, postal_code: newAddress_postal_code };
+                if (!newAddressData.phone || !newAddressData.address || !newAddressData.city || !newAddressData.postal_code) {
+                    throw new ApiError(400, 'Harap isi semua field alamat baru.');
+                }
+                const createdAddressResult = await addressService.createAddress(userId, newAddressData);
+                finalAddressId = createdAddressResult.data.address_id;
             }
-            const { addressId } = req.body;
-            const result = await orderService.createOrderFromCart(req.userId, { addressId });
-            res.status(201).json(result); // Status 201 Created
+            
+            if (!finalAddressId) {
+                throw new ApiError(400, 'Alamat pengiriman tidak valid.');
+            }
+
+            const result = await orderService.createOrderFromCart(userId, { addressId: finalAddressId });
+            
+            // PERUBAHAN UTAMA: Kirim JSON, bukan redirect
+            res.status(201).json({
+                status: 'success',
+                message: 'Pesanan berhasil dibuat!',
+                redirectUrl: `/orders/${result.data.orderId}?success=true` // Kirim URL tujuan
+            });
+
         } catch (error) {
+            // Teruskan error agar bisa ditangkap oleh AJAX di frontend
             console.error('Error in orderController.createOrder:', error.message);
             next(error);
         }
     },
 
     /**
-     * Mengambil riwayat pesanan untuk pengguna yang sedang login.
-     * @param {Object} req - Objek request Express (req.userId dari authMiddleware).
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
+     * Menampilkan halaman riwayat pesanan pengguna.
      */
     getMyOrders: async (req, res, next) => {
         try {
-            if (!req.userId) {
-                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
-            }
             const result = await orderService.getMyOrders(req.userId);
-            res.status(200).json(result);
-            // Jika ingin merender halaman riwayat pesanan:
-            // const commonData = await getCommonRenderData(req.userId, { title: 'My Orders' });
-            // res.render('user-orders', { ...commonData, orders: result.data });
+            const commonData = await getCommonRenderData(req.userId, { title: 'Riwayat Pesanan Saya' });
+            res.render('orders', { ...commonData, orders: result.data });
         } catch (error) {
-            console.error('Error in orderController.getMyOrders:', error.message);
             next(error);
         }
     },
 
     /**
-     * Mengambil detail pesanan tertentu untuk pengguna yang sedang login.
-     * @param {Object} req - Objek request Express (req.params.id, req.userId).
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
+     * Menampilkan halaman detail pesanan.
      */
     getOrderDetail: async (req, res, next) => {
-        const { id } = req.params;
         try {
-            if (!req.userId) {
-                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
-            }
-            const result = await orderService.getOrderDetail(id, req.userId);
-            res.status(200).json(result);
-            // Jika ingin merender halaman detail pesanan:
-            // const commonData = await getCommonRenderData(req.userId, { title: 'Order Details' });
-            // res.render('order-detail', { ...commonData, order: result.data });
+            const { id } = req.params;
+            const result = await orderService.getOrderDetail(req.userId, id);
+            const commonData = await getCommonRenderData(req.userId, { title: `Detail Pesanan #${result.data.order_id}` });
+
+            // Cek apakah ada query 'success' untuk menampilkan notifikasi
+            const showSuccessNotification = req.query.success === 'true';
+
+            res.render('order-detail', { 
+                ...commonData, 
+                order: result.data,
+                showSuccessNotification: showSuccessNotification 
+            });
         } catch (error) {
-            console.error('Error in orderController.getOrderDetail:', error.message);
             next(error);
         }
     },

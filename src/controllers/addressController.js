@@ -11,14 +11,16 @@ const addressController = {
      */
     createAddress: async (req, res, next) => {
         try {
-            if (!req.userId) {
-                return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
-            }
+            const userId = req.userId;
             const addressData = req.body;
-            const result = await addressService.createAddress(req.userId, addressData);
-            res.status(201).json(result);
+            const result = await addressService.createAddress(userId, addressData);
+
+            res.status(201).json({
+                status: 'success',
+                message: 'Alamat baru berhasil disimpan.',
+                data: result.data
+            });
         } catch (error) {
-            console.error('Error in addressController.createAddress:', error.message);
             next(error);
         }
     },
