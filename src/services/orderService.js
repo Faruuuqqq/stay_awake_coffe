@@ -1,4 +1,5 @@
 // src/services/orderService.js
+const db = require('../config/db');
 const orderModel = require('../models/orderModel');
 const cartModel = require('../models/cartModel');
 const productModel = require('../models/productModel'); // Untuk mengurangi stok
@@ -35,91 +36,92 @@ class OrderService {
      * @throws {ApiError} Untuk error internal server.
      */
     async createOrderFromCart(userId, orderData) {
-        const { error: userIdError } = Joi.number().integer().positive().required().validate(userId);
-        if (userIdError) {
-            throw new BadRequestError(`Invalid user ID: ${userIdError.message}`);
-        }
-
-        const { error, value } = createOrderSchema.validate(orderData);
+        // Validasi input
+        const { error } = Joi.object({
+            addressId: Joi.number().integer().positive().required()
+        }).validate({ addressId: orderData.addressId });
+        
         if (error) {
-            throw new BadRequestError(`Data pesanan tidak valid: ${error.details[0].message}`);
+            throw new BadRequestError(error.details[0].message);
         }
 
-        const { addressId } = value;
+        const connection = await db.getConnection(); // Dapatkan koneksi dari pool
+        await connection.beginTransaction(); // Mulai transaksi
 
-        let connection; // Untuk transaksi database
         try {
-            connection = await db.getConnection(); // Dapatkan koneksi untuk transaksi
-            await connection.beginTransaction(); // Mulai transaksi
+            // 1. Verifikasi alamat & dapatkan keranjang
+            const address = await addressModel.findByIdAndUserId(orderData.addressId, userId);
+            if (!address) {
+                throw new NotFoundError('Alamat pengiriman tidak ditemukan atau bukan milik Anda.');
+            }
 
-            // 1. Dapatkan keranjang dan item-itemnya
             const cart = await cartModel.findByUserId(userId);
             if (!cart) {
-                throw new NotFoundError('Keranjang tidak ditemukan.'); // Seharusnya tidak terjadi jika getOrCreateCart selalu dipanggil
+                throw new NotFoundError('Keranjang tidak ditemukan.');
             }
-            const cartItems = await cartModel.findItemsByCartId(cart.cart_id);
-
-            if (!cartItems || cartItems.length === 0) {
-                throw new BadRequestError('Keranjang belanja kosong.');
+            
+            const items = await cartModel.findItemsByCartId(cart.cart_id);
+            if (items.length === 0) {
+                throw new BadRequestError('Keranjang Anda kosong.');
             }
-
-            // 2. Validasi alamat pengiriman dan pastikan itu milik pengguna
-            const address = await addressModel.findById(addressId);
-            if (!address || address.user_id !== userId) {
-                throw new BadRequestError('Alamat pengiriman tidak valid atau bukan milik Anda.');
-            }
-
-            // 3. Verifikasi stok dan hitung total harga
+            
+            // 2. Hitung total harga & siapkan data pesanan
             let totalPrice = 0;
-            const productUpdates = []; // Untuk melacak produk yang perlu diperbarui stoknya
-
-            for (const item of cartItems) {
-                const product = await productModel.findById(item.product_id);
-                if (!product) {
-                    throw new NotFoundError(`Produk '${item.name}' tidak ditemukan lagi.`);
+            for (const item of items) {
+                // Verifikasi stok produk
+                if (item.quantity > item.stock) {
+                    throw new BadRequestError(`Stok untuk produk "${item.name}" tidak mencukupi.`);
                 }
-                if (product.stock < item.quantity) {
-                    throw new BadRequestError(`Stok produk '${item.name}' tidak mencukupi. Tersedia: ${product.stock}, diminta: ${item.quantity}.`);
-                }
-                totalPrice += item.price * item.quantity;
-                productUpdates.push({ productId: item.product_id, newStock: product.stock - item.quantity });
+                totalPrice += item.quantity * item.price;
             }
 
-            // 4. Buat pesanan di tabel 'orders'
-            const orderId = await orderModel.create(userId, addressId, totalPrice);
+            const orderPayload = {
+                user_id: userId,
+                address_id: orderData.addressId,
+                total_price: totalPrice,
+                status: 'pending' // Status awal pesanan
+            };
 
-            // 5. Tambahkan item-item keranjang ke tabel 'order_items'
-            const orderItemsToCreate = cartItems.map(item => ({
-                order_id: orderId,
-                product_id: item.product_id,
-                quantity: item.quantity,
-                price: item.price // Simpan harga saat ini ke order_items
-            }));
-            await orderModel.addItems(orderId, orderItemsToCreate);
+            // 3. Buat pesanan utama di tabel 'orders'
+            const newOrder = await orderModel.create(orderPayload, connection);
+            const orderId = newOrder.order_id;
+            
+            // 4. Pindahkan item dari keranjang ke 'order_items' & kurangi stok
+            for (const item of items) {
+                const itemTotalPrice = item.quantity * item.price;
 
-            // 6. Kurangi stok produk
-            for (const update of productUpdates) {
-                // Perlu updateStock method di productModel atau productModel.update
-                // Untuk kesederhanaan, asumsikan productModel.update bisa digunakan
-                await productModel.update(update.productId, { stock: update.newStock });
+                await orderModel.addOrderItem({
+                    order_id: orderId,
+                    product_id: item.product_id,
+                    quantity: item.quantity,
+                    price: itemTotalPrice
+                }, connection);
+                
+                await productModel.decreaseStock(item.product_id, item.quantity, connection);
             }
+            
+            // 5. Kosongkan keranjang
+            await cartModel.clear(cart.cart_id, connection);
+            
+            // 6. Jika semua berhasil, commit transaksi
+            await connection.commit();
+            connection.release(); // Lepaskan koneksi kembali ke pool
 
-            // 7. Kosongkan keranjang setelah pesanan berhasil
-            await cartModel.clear(cart.cart_id);
-
-            await connection.commit(); // Commit transaksi
             return {
                 status: 'success',
                 message: 'Pesanan berhasil dibuat.',
-                orderId: orderId
+                data: { orderId: orderId }
             };
+
         } catch (error) {
-            if (connection) await connection.rollback(); // Rollback transaksi jika ada error
+            // Jika terjadi error, batalkan semua perubahan (rollback)
+            await connection.rollback();
+            connection.release();
             console.error('Error in OrderService.createOrderFromCart (transaction rolled back):', error.message);
+            
+            // Teruskan error asli jika itu adalah ApiError, atau buat yang baru
             if (error instanceof ApiError) throw error;
             throw new ApiError(500, 'Gagal membuat pesanan.');
-        } finally {
-            if (connection) connection.release(); // Pastikan koneksi dilepaskan
         }
     }
 
