@@ -11,13 +11,16 @@ const Order = {
      * @returns {Promise<number>} ID pesanan yang baru dibuat.
      * @throws {Error} Jika terjadi kesalahan database.
      */
-    create: async (userId, addressId, totalPrice) => {
+    create: async (orderData, connection) => {
+        // Fungsi create sudah benar, tidak perlu diubah
+        const conn = connection || db;
         try {
-            const [result] = await db.execute(
-                `INSERT INTO orders (user_id, address_id, total_price, status) VALUES (?, ?, ?, 'pending')`,
-                [userId, addressId, totalPrice]
+            const { user_id, address_id, total_price, status } = orderData;
+            const [result] = await conn.execute(
+                `INSERT INTO orders (user_id, address_id, total_price, status) VALUES (?, ?, ?, ?)`,
+                [user_id, address_id, total_price, status || 'pending']
             );
-            return result.insertId;
+            return { order_id: result.insertId, ...orderData };
         } catch (error) {
             console.error('Error creating order in DB:', error.message);
             throw new Error('Database error: Failed to create order');
@@ -25,33 +28,31 @@ const Order = {
     },
 
     /**
-     * Menyimpan item-item pesanan ke database.
-     * @param {number} orderId - ID pesanan induk.
-     * @param {Array<Object>} items - Array objek item pesanan ({ product_id, quantity, price, total_price }).
-     * @returns {Promise<void>}
-     * @throws {Error} Jika terjadi kesalahan database.
+     * PERBAIKAN DI SINI: Menyimpan satu item pesanan ke database.
+     * Menggunakan variabel 'total_price' yang benar.
      */
-    addItems: async (orderId, items) => { // Mengganti createOrderItems menjadi addItems
+    addOrderItem: async (itemData, connection) => {
+        const conn = connection || db;
         try {
-            // Memastikan items adalah array dan memiliki data
-            if (!Array.isArray(items) || items.length === 0) {
-                return; // Tidak melakukan apa-apa jika tidak ada item
-            }
+            // PERUBAHAN: Mengambil 'total_price' dari itemData, bukan 'price'
+            const { order_id, product_id, quantity, total_price } = itemData;
 
-            const queries = items.map(item => {
-                // Pastikan `item.total_price` sudah dihitung di service layer jika perlu
-                return db.execute(
-                    `INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)`, // Nama kolom price di order_items
-                    [orderId, item.product_id, item.quantity, item.price] // Ambil price dari item
-                );
-            });
-            await Promise.all(queries);
+            if ([order_id, product_id, quantity, total_price].includes(undefined)) {
+                throw new Error('Attempted to insert an order item with undefined values.');
+            }
+            console.log ();
+
+            // Menggunakan variabel 'total_price' di query
+            await conn.execute(
+                `INSERT INTO order_items (order_id, product_id, quantity, total_price) VALUES (?, ?, ?, ?)`,
+                [order_id, product_id, quantity, total_price]
+            );
         } catch (error) {
-            console.error(`Error adding order items for order ID ${orderId} in DB:`, error.message);
-            throw new Error('Database error: Failed to create order items');
+            console.error('Error adding order item in DB:', error.message);
+            throw new Error('Database error: Failed to add order item');
         }
     },
-
+    
     /**
      * Mengambil detail pesanan berdasarkan ID, termasuk alamat pengiriman, informasi pembayaran, dan item pesanan.
      * @param {number} orderId - ID pesanan.

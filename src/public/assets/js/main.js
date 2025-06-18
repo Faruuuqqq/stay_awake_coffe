@@ -78,23 +78,13 @@
   function initSwiper() {
     document.querySelectorAll(".init-swiper").forEach(function(swiperElement) {
       const swiperConfigElement = swiperElement.querySelector(".swiper-config");
-      
       if (swiperConfigElement) {
-        let config = {};
         try {
-          config = JSON.parse(
-            swiperConfigElement.innerHTML.trim()
-          );
+          let config = JSON.parse(swiperConfigElement.textContent.trim());
+          new Swiper(swiperElement, config); // Baris ini yang menyebabkan error
         } catch (e) {
-          console.error("Error parsing Swiper config for element:", swiperElement, e);
-          return;
+          console.error("Error parsing Swiper config:", e);
         }
-
-        // Ini adalah inisialisasi Swiper dasar
-        new Swiper(swiperElement, config);
-
-      } else {
-          console.warn("Swiper config element (class='swiper-config') not found inside an element with class 'init-swiper'. This Swiper instance might not be configured properly:", swiperElement);
       }
     });
   }
@@ -341,7 +331,6 @@
   }
 
   // Tambahkan event listener untuk menjalankan semua fungsi global saat halaman dimuat
-  window.addEventListener('load', initGlobalFunctions);
   document.addEventListener('scroll', toggleScrolled); // scroll tetap terpisah
 
     /**
@@ -351,6 +340,22 @@
    * ===================================================================
    */
   $(document).ready(function() {
+    // Jalankan toggleScrolled di awal
+    toggleScrolled(); 
+    // Inisialisasi semua Swiper (termasuk announcement-slider)
+    initSwiper(); 
+    // Inisialisasi AOS
+    aosInit();
+    // Inisialisasi GLightbox
+    initGlightbox();
+    // Inisialisasi PureCounter
+    initPureCounter();
+    // Inisialisasi Isotope Layouts
+    initIsotopeLayouts();
+    // Inisialisasi Tooltips
+    window.initTooltips(); 
+    // Toggle scroll top button
+    toggleScrollTop(); 
     // Handler untuk form registrasi
     const registerForm = $('#register-form');
     if (registerForm.length) {

@@ -159,7 +159,24 @@ h6 {
     opacity: 0;
   }
 }
+/* ===================================================================
+   Custom Button Styles
+   =================================================================== */
+.btn-accent {
+  background-color: var(--accent-color);
+  color: #fff;
+  border-color: var(--accent-color);
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
 
+.btn-accent:hover {
+  background-color: color-mix(in srgb, var(--accent-color), #000 10%);
+  color: #fff;
+  border-color: color-mix(in srgb, var(--accent-color), #000 10%);
+}
 /*--------------------------------------------------------------
 # Global Header
 --------------------------------------------------------------*/

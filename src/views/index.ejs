@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HomePage</title>
-  <meta name="description" content="">
-  <meta name="keywords" content="">
+  <title><%= typeof title !== 'undefined' ? title : 'Stay Awake Coffee' %></title>
+  <meta name="description" content="Selamat datang di Stay Awake Coffee. Nikmati kopi pilihan terbaik dari biji berkualitas tinggi, diseduh untuk para pencinta kopi sejati.">
+  <meta name="keywords" content="kopi, stay awake coffee, biji kopi, kopi indonesia, coffee shop">
 
   <link href="/assets/img/favicon.png" rel="icon">
   <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
@@ -19,44 +19,119 @@
   <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
   <link href="/assets/vendor/aos/aos.css" rel="stylesheet">
   <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
-  <link href="/assets/vendor/drift-zoom/drift-basic.css" rel="stylesheet">
-
+  
   <link href="/assets/css/main.css" rel="stylesheet">
-  <link href="/assets/css/custom-toast.css" rel="stylesheet">
 </head>
 
 <body class="index-page">
-  <%- include('partials/header') %>
+<%- include('partials/header', { user: user, cartItemCount: cartItemCount }) %>
 
   <main class="main">
-
     <%- include('partials/hero') %>
-
     <%- include('partials/info-cards') %>
 
-    <%- include('partials/category-cards') %>
+    <section id="category-cards" class="category-cards section">
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
+        <div class="category-slider swiper init-swiper">
+          <script type="application/json" class="swiper-config">
+            {
+              "loop": true,
+              "speed": 600,
+              "autoplay": { "delay": 5000, "disableOnInteraction": false },
+              "slidesPerView": "auto",
+              "navigation": { "nextEl": ".swiper-button-next", "prevEl": ".swiper-button-prev" },
+              "breakpoints": {
+                "320": { "slidesPerView": 1, "spaceBetween": 20 },
+                "576": { "slidesPerView": 2, "spaceBetween": 20 },
+                "768": { "slidesPerView": 3, "spaceBetween": 30 },
+                "992": { "slidesPerView": 4, "spaceBetween": 30 }
+              }
+            }
+          </script>
+          <div class="swiper-wrapper">
+            <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
+              <% categories.forEach((category, index) => { %>
+                <div class="swiper-slide">
+                  <div class="category-card">
+                    <div class="category-image">
+                      <img src="<%= category.image || '/assets/img/default-category.png' %>" alt="<%= category.name %>" class="img-fluid" />
+                    </div>
+                    <h3 class="category-title"><%= category.name %></h3>
+                    <p class="category-count"><%= category.productCount || 0 %> Products</p>
+                    <a href="/products?category=<%= category.category_id %>" class="stretched-link"></a>
+                  </div>
+                </div>
+              <% }) %>
+            <% } else { %>
+              <div class="swiper-slide"><p>No categories found.</p></div>
+            <% } %>
+          </div>
+          <div class="swiper-button-next"></div>
+          <div class="swiper-button-prev"></div>
+        </div>
+      </div>
+    </section>
 
-    <%- include('partials/product-list') %>
 
-    </main>
+  <section id="product-list" class="product-list section">
+    <div class="container" data-aos="fade-up">
+      <div class="section-title">
+        <h2>Our Featured Products</h2>
+        <p>Discover our handpicked selection of premium coffee beans.</p>
+      </div>
+      <div class="row gy-4">
+        <% if (typeof products !== 'undefined' && products.length > 0) { %>
+          <% products.slice(0, 12).forEach(product => { %>
+            <div class="col-lg-3 col-md-4 col-sm-6 col-6">
+              <div class="product-card h-100">
+                <div class="product-image">
+                  <a href="/products/<%= product.product_id %>">
+                    <img src="<%= product.image || '/assets/img/default-product.png' %>" alt="<%= product.name %>" class="main-img img-fluid">
+                  </a>
+                  <div class="product-overlay">
+                    <button type="button" class="action-btn add-to-cart-btn" data-product-id="<%= product.product_id %>" title="Add to Cart">
+                      <i class="bi bi-cart-plus"></i>
+                    </button>
+                    <a href="/products/<%= product.product_id %>" class="action-btn" title="View Details"><i class="bi bi-eye"></i></a>
+                  </div>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title">
+                    <a href="/products/<%= product.product_id %>"><%= product.name %></a>
+                  </h3>
+                  <div class="product-price">
+                    <span> <%= new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(product.price) %> </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="col-12 text-center">
+            <p>No featured products available at the moment.</p>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </section>
+  </main>
 
   <%- include('partials/footer-newsletter') %>
-
   <%- include('partials/footer') %>
 
-  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-
+  <a href="#" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
   <div id="preloader"></div>
 
   <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="/assets/vendor/php-email-form/validate.js"></script>
   <script src="/assets/vendor/swiper/swiper-bundle.min.js"></script>
   <script src="/assets/vendor/aos/aos.js"></script>
+  <script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
+  <script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
   <script src="/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
   <script src="/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
-  <script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
-  <script src="/assets/vendor/drift-zoom/Drift.min.js"></script>
-  <script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script src="/assets/js/main.js"></script>
 

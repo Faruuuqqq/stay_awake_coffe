@@ -5,9 +5,6 @@ const db = require('../config/db');
 const Address = {
     /**
      * Membuat alamat baru.
-     * @param {Object} addressData - Data alamat ({ user_id, phone, address, city, postal_code }).
-     * @returns {Promise<number>} ID alamat yang baru dibuat.
-     * @throws {Error} Jika terjadi kesalahan database.
      */
     create: async ({ user_id, phone, address, city, postal_code }) => {
         try {
@@ -15,7 +12,8 @@ const Address = {
                 `INSERT INTO addresses (user_id, phone, address, city, postal_code) VALUES (?, ?, ?, ?, ?)`,
                 [user_id, phone, address, city, postal_code]
             );
-            return result.insertId;
+            // Kembalikan objek lengkap dari alamat yang baru dibuat
+            return { address_id: result.insertId, user_id, phone, address, city, postal_code };
         } catch (error) {
             console.error('Error creating address in DB:', error.message);
             throw new Error('Database error: Failed to create address');
@@ -23,18 +21,24 @@ const Address = {
     },
 
     /**
-     * Mengambil alamat berdasarkan ID.
-     * Nama fungsi diubah menjadi `findById` untuk konsistensi.
-     * @param {number} address_id - ID alamat.
-     * @returns {Promise<Object|null>} Objek alamat jika ditemukan, null jika tidak.
-     * @throws {Error} Jika terjadi kesalahan database.
+     * Mengambil semua alamat berdasarkan ID pengguna.
+     */
+    findByUserId: async (userId) => {
+        try {
+            const [rows] = await db.query('SELECT * FROM addresses WHERE user_id = ? ', [userId]);
+            return rows;
+        } catch (error) {
+            console.error(`Error fetching addresses by user ID ${userId} from DB:`, error.message);
+            throw new Error('Database error: Failed to fetch addresses by user ID');
+        }
+    },
+
+    /**
+     * Mengambil satu alamat berdasarkan ID-nya.
      */
     findById: async (address_id) => {
         try {
-            const [rows] = await db.query(
-                `SELECT * FROM addresses WHERE address_id = ?`,
-                [address_id]
-            );
+            const [rows] = await db.query('SELECT * FROM addresses WHERE address_id = ?', [address_id]);
             return rows[0] || null;
         } catch (error) {
             console.error(`Error fetching address by ID ${address_id} from DB:`, error.message);
@@ -43,31 +47,25 @@ const Address = {
     },
 
     /**
-     * Mengambil semua alamat berdasarkan ID pengguna.
-     * Nama fungsi diubah menjadi `findByUserId` untuk konsistensi.
-     * @param {number} user_id - ID pengguna.
-     * @returns {Promise<Array>} Array objek alamat.
-     * @throws {Error} Jika terjadi kesalahan database.
+     * FUNGSI BARU: Mengambil alamat berdasarkan ID alamat DAN ID pengguna.
+     * Ini penting untuk memastikan pengguna tidak menggunakan alamat orang lain.
      */
-    findByUserId: async (user_id) => { // Mengganti getAddressesByUserId menjadi findByUserId
+    findByIdAndUserId: async (address_id, user_id) => {
         try {
             const [rows] = await db.query(
-                `SELECT * FROM addresses WHERE user_id = ?`,
-                [user_id]
+                'SELECT * FROM addresses WHERE address_id = ? AND user_id = ?',
+                [address_id, user_id]
             );
-            return rows;
+            return rows[0] || null;
         } catch (error) {
-            console.error(`Error fetching addresses for user ID ${user_id} from DB:`, error.message);
-            throw new Error('Database error: Failed to fetch addresses by user ID');
+            console.error(`Error fetching address ID ${address_id} for user ID ${user_id} from DB:`, error.message);
+            throw new Error('Database error: Failed to verify and fetch address');
         }
     },
 
+
     /**
-     * Memperbarui alamat yang sudah ada.
-     * @param {number} address_id - ID alamat yang akan diperbarui.
-     * @param {Object} updateData - Data yang akan diperbarui ({ phone, address, city, postal_code }).
-     * @returns {Promise<boolean>} True jika alamat berhasil diperbarui, false jika tidak ditemukan.
-     * @throws {Error} Jika terjadi kesalahan database.
+     * Memperbarui alamat berdasarkan ID.
      */
     update: async (address_id, { phone, address, city, postal_code }) => {
         try {
@@ -84,9 +82,6 @@ const Address = {
 
     /**
      * Menghapus alamat berdasarkan ID.
-     * @param {number} address_id - ID alamat yang akan dihapus.
-     * @returns {Promise<boolean>} True jika alamat berhasil dihapus, false jika tidak ditemukan.
-     * @throws {Error} Jika terjadi kesalahan database.
      */
     delete: async (address_id) => {
         try {
