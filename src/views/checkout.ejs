@@ -1,413 +1,291 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout Page</title>
-  <meta name="description" content="">
-  <meta name="keywords" content="">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'Checkout' %></title>
+    
+    <link href="/assets/img/favicon.png" rel="icon" />
+    <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon" />
 
-  <link href="/assets/img/favicon.png" rel="icon">
-  <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@400;500;700&family=Poppins:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
 
-  <link href="https://fonts.googleapis.com" rel="preconnect">
-  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+    <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet" />
+    <link href="/assets/vendor/aos/aos.css" rel="stylesheet" />
+    <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    
+    <link href="/assets/css/main.css" rel="stylesheet" />
 
-  <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-  <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
-  <link href="/assets/vendor/aos/aos.css" rel="stylesheet">
-  <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
-  <link href="/assets/vendor/drift-zoom/drift-basic.css" rel="stylesheet">
-
-  <link href="/assets/css/main.css" rel="stylesheet">
-  <link href="/assets/css/custom-toast.css" rel="stylesheet">
+    <style>
+        .checkout-section { margin-bottom: 2.5rem; }
+        .section-header { border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; }
+        .section-number { background-color: var(--accent-color); color: white; border-radius: 50%; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; }
+        .order-summary { background-color: #f9f9f9; padding: 25px; border-radius: 8px; position: sticky; top: 120px; }
+        .order-summary h3 { border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; }
+        .order-item { display: flex; align-items: center; margin-bottom: 15px; }
+        .order-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin-right: 15px; }
+        .order-item-details { flex-grow: 1; }
+        .order-item-details h4 { font-size: 1rem; margin-bottom: 2px; }
+        .order-item-details p { font-size: 0.9rem; color: #666; margin-bottom: 0; }
+        .order-totals { border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px; }
+        .order-total { font-size: 1.2rem; font-weight: bold; }
+        .btn-loading .spinner-border { width: 1rem; height: 1rem; }
+    </style>
 </head>
-<body>
+<body class="checkout-page">
 
-<%- include('partials/header') %>
+<%- include('partials/header', { user: user, cartItemCount: cartItemCount }) %>
 
 <main class="main">
-
-  <div class="page-title light-background">
-    <div class="container d-lg-flex justify-content-between align-items-center">
-      <h1 class="mb-2 mb-lg-0">Checkout</h1>
-      <nav class="breadcrumbs">
-        <ol>
-          <li><a href="/">Home</a></li>
-          <li class="current">Checkout</li>
-        </ol>
-      </nav>
+    <div class="page-title light-background">
+        <div class="container"><h1>Checkout</h1></div>
     </div>
-  </div><section id="checkout" class="checkout section">
-    <div class="container" data-aos="fade-up" data-aos-delay="100">
-      <% if (error) { %>
-        <div class="alert alert-danger" role="alert">
-          <%= error %>
-        </div>
-      <% } %>
-      <% if (success) { %>
-        <div class="alert alert-success" role="alert">
-          <%= success %>
-        </div>
-      <% } %>
-      <div class="row">
-        <div class="col-lg-7">
-          <div class="checkout-container" data-aos="fade-up">
-            <form id="checkoutForm" action="/orders" method="POST" novalidate class="checkout-form"> <%# Action changed to /orders %>
-              <div class="checkout-section" id="customer-info">
-                <div class="section-header">
-                  <div class="section-number">1</div>
-                  <h3>Customer Information</h3>
-                </div>
-                <div class="section-content">
-                  <div class="row">
-                    <div class="col-md-6 form-group">
-                      <label for="first-name">First Name</label>
-                      <input type="text" name="first-name" class="form-control" id="first-name" placeholder="Your First Name" required="" value="<%= user.name ? user.name.split(' ')[0] : '' %>" <%= user ? 'disabled' : '' %>> <%# Dynamic & disabled %>
-                    </div>
-                    <div class="col-md-6 form-group">
-                      <label for="last-name">Last Name</label>
-                      <input type="text" name="last-name" class="form-control" id="last-name" placeholder="Your Last Name" value="<%= user.name ? user.name.split(' ').slice(1).join(' ') : '' %>" <%= user ? 'disabled' : '' %>> <%# Dynamic & disabled %>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" class="form-control" name="email" id="email" placeholder="Your Email" required="" value="<%= user.email || '' %>" <%= user ? 'disabled' : '' %>> <%# Dynamic & disabled %>
-                  </div>
-                  <div class="form-group">
-                    <label for="phone">Phone Number</label>
-                    <%# Asumsi nomor telepon bisa diambil dari alamat pertama user, atau jika ada di user model %>
-                    <input type="tel" class="form-control" name="phone" id="phone" placeholder="Your Phone Number" required="" value="<%= addresses && addresses.length > 0 ? addresses[0].phone : '' %>"> <%# Dynamic, not disabled as user can change %>
-                  </div>
-                </div>
-              </div>
 
-              <div class="checkout-section" id="shipping-address">
-                <div class="section-header">
-                  <div class="section-number">2</div>
-                  <h3>Shipping Address</h3>
-                </div>
-                <div class="section-content">
-                  <input type="hidden" name="address_id" id="selectedAddressId"> <%# Hidden input for selected address_id %>
+    <section id="checkout" class="checkout section">
+        <div class="container" data-aos="fade-up">
 
-                  <% if (addresses && addresses.length > 0) { %>
-                  <h5 class="mt-3">Choose from saved addresses:</h5>
-                  <div class="saved-addresses mb-3">
-                    <% addresses.forEach(addr => { %>
-                    <div class="form-check">
-                      <input class="form-check-input existing-address-radio" type="radio" name="addressOption" id="address_<%= addr.address_id %>" value="<%= addr.address_id %>" required>
-                      <label class="form-check-label" for="address_<%= addr.address_id %>">
-                        <%= addr.address %>, <%= addr.city %>, <%= addr.postal_code %> (Telp: <%= addr.phone %>)
-                      </label>
-                    </div>
-                    <% }); %>
-                    <div class="form-check mt-2">
-                      <input class="form-check-input existing-address-radio" type="radio" name="addressOption" id="address_new" value="new_address" required>
-                      <label class="form-check-label" for="address_new">
-                        Add a new address
-                      </label>
-                    </div>
-                  </div>
-                  <% } else { %>
-                    <p>No saved addresses. Please add a new address below.</p>
-                  <% } %>
-
-                  <div id="newAddressFields" class="mt-4" style="<%= addresses && addresses.length > 0 ? 'display: none;' : '' %>"> <%# Initially hidden if addresses exist %> }
-                    <h5 class="mb-3">New Address Details:</h5>
-                    <div class="form-group">
-                      <label for="newAddressPhone">Phone Number (for new address)</label>
-                      <input type="tel" class="form-control" name="newAddressPhone" id="newAddressPhone" placeholder="Phone Number" required>
-                    </div>
-                    <div class="form-group">
-                      <label for="newAddressStreet">Street Address</label>
-                      <input type="text" class="form-control" name="newAddressStreet" id="newAddressStreet" placeholder="Street Address" required>
-                    </div>
-                    <div class="form-group">
-                      <label for="newAddressApartment">Apartment, Suite, etc. (optional)</label>
-                      <input type="text" class="form-control" name="newAddressApartment" id="newAddressApartment" placeholder="Apartment, Suite, Unit, etc.">
-                    </div>
-                    <div class="row">
-                      <div class="col-md-4 form-group">
-                        <label for="newAddressCity">City</label>
-                        <input type="text" name="newAddressCity" class="form-control" id="newAddressCity" placeholder="City" required>
-                      </div>
-                      <div class="col-md-4 form-group">
-                        <label for="newAddressState">State</label>
-                        <input type="text" name="newAddressState" class="form-control" id="newAddressState" placeholder="State" required>
-                      </div>
-                      <div class="col-md-4 form-group">
-                        <label for="newAddressZip">ZIP Code</label>
-                        <input type="text" name="newAddressZip" class="form-control" id="newAddressZip" placeholder="ZIP Code" required>
-                      </div>
-                    </div>
-                    <div class="form-group">
-                      <label for="newAddressCountry">Country</label>
-                      <select class="form-select" id="newAddressCountry" name="newAddressCountry" required>
-                        <option value="">Select Country</option>
-                        <option value="US">United States</option>
-                        <option value="ID">Indonesia</option> <%# Added Indonesia %>
-                        <option value="CA">Canada</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="checkout-section" id="payment-method">
-                <div class="section-header">
-                  <div class="section-number">3</div>
-                  <h3>Payment Method</h3>
-                </div>
-                <div class="section-content">
-                  <p class="text-muted">You will select your final payment method on the next page after confirming your order.</p>
-                  <div class="payment-options d-none"> <%# Hide static payment options as they are not used for submission here %>
-                    <div class="payment-option active">
-                      <input type="radio" name="payment-method" id="credit-card" checked="">
-                      <label for="credit-card">
-                        <span class="payment-icon"><i class="bi bi-credit-card-2-front"></i></span>
-                        <span class="payment-label">Credit / Debit Card</span>
-                      </label>
-                    </div>
-                  </div>
-                  <div class="payment-details d-none" id="credit-card-details"></div>
-                </div>
-              </div>
-
-              <button type="submit" class="btn btn-accent w-100" id="placeOrderBtn">Place Order</button>
-            </form>
-          </div>
-        </div>
-
-        <div class="col-lg-5">
-          <div class="order-summary" data-aos="fade-left" data-aos-delay="200">
-            <div class="order-summary-header">
-              <h3>Order Summary</h3>
-              <span class="item-count"><%= items.length %> Items</span>
-            </div>
-
-            <div class="order-summary-content">
-              <div class="order-items">
-                <% if (items && items.length > 0) { %>
-                  <% items.forEach(item => { %>
-                    <div class="order-item">
-                      <div class="order-item-image">
-                        <img src="<%= item.image %>" alt="<%= item.name %>" class="img-fluid" loading="lazy">
-                      </div>
-                      <div class="order-item-details">
-                        <h4><%= item.name %></h4>
-                        <%# Catatan: item.color dan item.size perlu diambil dari backend %>
-                        <% if (item.color || item.size) { %>
-                          <p class="order-item-variant">
-                            <% if (item.color) { %>Color: <%= item.color %><% } %>
-                            <% if (item.color && item.size) { %> | <% } %>
-                            <% if (item.size) { %>Size: <%= item.size %><% } %>
-                          </p>
-                        <% } %>
-                        <div class="order-item-price">
-                          <span class="quantity"><%= item.quantity %> ×</span>
-                          <span class="price">$<%= parseFloat(item.price).toFixed(2) %></span> <%# Changed to $ %>
+            <div class="row">
+                <div class="col-lg-7">
+                    <form id="checkoutForm" class="checkout-form">
+                        <div class="checkout-section">
+                            <div class="section-header">
+                                <div class="section-number">1</div>
+                                <h3>Informasi Pelanggan</h3>
+                            </div>
+                            <div class="section-content">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3"><label class="form-label">Nama</label><input type="text" class="form-control" value="<%= user.name %>" disabled></div>
+                                    <div class="col-md-6 mb-3"><label class="form-label">Email</label><input type="email" class="form-control" value="<%= user.email %>" disabled></div>
+                                </div>
+                            </div>
                         </div>
-                      </div>
+
+                        <div class="checkout-section">
+                            <div class="section-header"><div class="section-number">2</div><h3>Alamat Pengiriman</h3></div>
+                            <div class="section-content">
+                                <div class="saved-addresses mb-3" id="savedAddressesContainer">
+                                    <% if (addresses && addresses.length > 0) { %>
+                                        <% addresses.forEach((addr, index) => { %>
+                                            <div class="form-check p-3 border rounded mb-2">
+                                                <input class="form-check-input adr-option" type="radio" name="addressId" id="adr_<%= addr.address_id %>" value="<%= addr.address_id %>" <%= index === 0 ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="adr_<%= addr.address_id %>"><strong><%= user.name %></strong><br><%= addr.address %>, <%= addr.city %>, <%= addr.postal_code %><br>Telp: <%= addr.phone %></label>
+                                            </div>
+                                        <% }); %>
+                                    <% } %>
+                                </div>
+                                <div class="form-check p-3 border rounded mb-2" id="newAddressToggle">
+                                    <input class="form-check-input adr-option" type="radio" name="addressId" id="adr_new" value="new" <%= (!addresses || addresses.length === 0) ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="adr_new"><strong><i class="bi bi-plus-circle-fill me-2"></i>Gunakan alamat pengiriman baru</strong></label>
+                                </div>
+                                
+                                <div id="newAddressFields" class="mt-3" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-12 form-group mb-3"><input type="text" class="form-control" id="newAddressPhone" placeholder="Nomor Telepon"></div>
+                                        <div class="col-12 form-group mb-3"><input type="text" class="form-control" id="newAddressAddress" placeholder="Jalan"></div>
+                                        <div class="col-md-6 form-group mb-3"><input type="text" id="newAddressCity" class="form-control" placeholder="Kota"></div>
+                                        <div class="col-md-6 form-group mb-3"><input type="text" id="newAddressPostalCode" class="form-control" placeholder="Kode Pos"></div>
+                                        <div class="col-12"><button type="button" class="btn btn-secondary" id="saveAddressBtn">Simpan Alamat</button></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checkout-section">
+                            <div class="section-header">
+                                <div class="section-number">3</div><h3>Metode Pengiriman</h3>
+                            </div>
+                            <div class="section-content">
+                                <div class="form-check p-3 border rounded mb-2">
+                                    <input class="form-check-input shipping-option" type="radio" name="shippingMethod" id="shippingStandard" value="5" checked>
+                                    <label class="form-check-label d-flex justify-content-between" for="shippingStandard">
+                                        <span>Standard Shipping (3-5 Days)</span><strong>$5.00</strong>
+                                    </label>
+                                </div>
+                                <div class="form-check p-3 border rounded mb-2">
+                                    <input class="form-check-input shipping-option" type="radio" name="shippingMethod" id="shippingExpress" value="15">
+                                    <label class="form-check-label d-flex justify-content-between" for="shippingExpress">
+                                        <span>Express Shipping (1-2 Days)</span><strong>$15.00</strong>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="order-summary" data-subtotal="<%= totalPrice %>">
+                        <div class="order-items">
+                            <% if (items && items.length > 0) { items.forEach(item => { %>
+                                <div class="order-item">
+                                    <img src="<%= item.image %>" alt="<%= item.name %>">
+                                    <div class="order-item-details">
+                                        <h4><%= item.name %></h4>
+                                        <p><%= item.quantity %> &times; <%= new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(item.price) %></p>
+                                    </div>
+                                    <span><%= new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(item.quantity * item.price) %></span>
+                                </div>
+                            <% }) } else { %>
+                                <p class="text-center">Keranjang Anda kosong.</p>
+                            <% } %>
+                        </div>
+                        <div class="order-totals">
+                            <div class="d-flex justify-content-between"><span>Subtotal</span> <span id="summarySubtotal"></span></div>
+                            <div class="d-flex justify-content-between"><span>Pengiriman</span> <span id="summaryShipping"></span></div>
+                            <div class="d-flex justify-content-between"><span>Pajak (11%)</span> <span id="summaryTax"></span></div>
+                            <div class="order-total d-flex justify-content-between"><span>Total</span> <span id="summaryTotal"></span></div>
+                        </div>
                     </div>
-                  <% }) %>
-                <% } else { %>
-                  <p class="text-center">Your cart is empty.</p>
-                <% } %>
-              </div>
-
-              <div class="order-totals">
-                <div class="order-subtotal d-flex justify-content-between">
-                  <span>Subtotal</span>
-                  <span>$<%= parseFloat(totalPrice).toFixed(2) %></span> <%# Changed to $ %>
                 </div>
-                <div class="order-shipping d-flex justify-content-between">
-                  <span>Shipping</span>
-                  <span id="shippingCostDisplay">$0.00</span> <%# Dynamic shipping cost %>
-                </div>
-                <div class="order-tax d-flex justify-content-between">
-                  <span>Tax</span>
-                  <span id="taxDisplay">$0.00</span> <%# Dynamic tax %>
-                </div>
-                <div class="order-total d-flex justify-content-between">
-                  <span>Total</span>
-                  <span id="finalTotalDisplay">$<%= parseFloat(totalPrice).toFixed(2) %></span> <%# Dynamic total %>
-                </div>
-              </div>
+                        <div class="checkout-section"></div>
+                        <button type="submit" class="btn btn-accent w-100 btn-lg" id="placeOrderBtn">
+                            <span class="btn-text">Buat Pesanan</span>
+                            <span class="btn-spinner spinner-border d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </form>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-  </section>
-
+    </section>
 </main>
 
 <%- include('partials/footer') %>
-
-<a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-
+<a href="#" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 <div id="preloader"></div>
 
-<script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="/assets/vendor/php-email-form/validate.js"></script>
-<script src="/assets/vendor/swiper/swiper-bundle.min.js"></script>
-<script src="/assets/vendor/aos/aos.js"></script>
-<script src="/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
-<script src="/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
-<script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
-<script src="/assets/vendor/drift-zoom/Drift.min.js"></script>
-<script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
-
-<script src="/assets/js/main.js"></script>
-
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/vendor/aos/aos.js"></script>
+    <script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
+    <script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+    <script src="/assets/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="/assets/js/main.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const checkoutForm = document.getElementById('checkoutForm');
-    const existingAddressRadios = document.querySelectorAll('.existing-address-radio');
-    const newAddressFields = document.getElementById('newAddressFields');
-    const selectedAddressIdInput = document.getElementById('selectedAddressId');
-    const placeOrderBtn = document.getElementById('placeOrderBtn');
-
-    const firstNameInput = document.getElementById('first-name');
-    const lastNameInput = document.getElementById('last-name');
-    const emailInput = document.getElementById('email');
-    const phoneInput = document.getElementById('phone');
-    const newAddressPhoneInput = document.getElementById('newAddressPhone');
-
-    if (existingAddressRadios.length === 0) {
-        newAddressFields.style.display = 'block';
+$(document).ready(function() {
+    // Fungsi untuk UI
+    function toggleNewAddressForm() {
+        const isNewAddress = $('#adr_new').is(':checked');
+        $('#newAddressFields').find('input').prop('required', isNewAddress);
+        isNewAddress ? $('#newAddressFields').slideDown() : $('#newAddressFields').slideUp();
     }
 
-    existingAddressRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            if (radio.value === 'new_address') {
-                newAddressFields.style.display = 'block';
-                newAddressFields.querySelectorAll('input, select').forEach(field => {
-                    if (field.name !== 'newAddressApartment') field.setAttribute('required', 'true');
-                });
-                selectedAddressIdInput.value = '';
-            } else {
-                newAddressFields.style.display = 'none';
-                newAddressFields.querySelectorAll('input, select').forEach(field => {
-                    field.removeAttribute('required');
-                });
-                selectedAddressIdInput.value = radio.value;
+    function setButtonLoading(isLoading, btn) {
+        btn.prop('disabled', isLoading);
+        btn.find('.btn-text').toggleClass('d-none', isLoading);
+        btn.find('.btn-spinner').toggleClass('d-none', !isLoading);
+    }
+
+    function updateOrderSummary() {
+        const subtotal = parseFloat($('.order-summary').data('subtotal')) || 0;
+        const shippingCost = parseFloat($('input[name="shippingMethod"]:checked').val()) || 0;
+        const tax = subtotal * 0.11;
+        const finalTotal = subtotal + shippingCost + tax;
+        const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+        $('#summarySubtotal').text(formatter.format(subtotal));
+        $('#summaryShipping').text(formatter.format(shippingCost));
+        $('#summaryTax').text(formatter.format(tax));
+        $('#summaryTotal').text(formatter.format(finalTotal));
+    }
+
+    // Panggil fungsi UI
+    $('.adr-option').on('change', toggleNewAddressForm);
+    toggleNewAddressForm();
+    $('.shipping-option').on('change', updateOrderSummary);
+    updateOrderSummary();
+
+    // --- ALUR BARU: Menyimpan Alamat via AJAX ---
+    $('#saveAddressBtn').on('click', function() {
+        const btn = $(this);
+        const newAddressData = {
+            phone: $('#newAddressPhone').val(),
+            address: $('#newAddressAddress').val(),
+            city: $('#newAddressCity').val(),
+            postal_code: $('#newAddressPostalCode').val(),
+        };
+
+        if (!newAddressData.phone || !newAddressData.address || !newAddressData.city || !newAddressData.postal_code) {
+            Swal.fire('Peringatan', 'Harap isi semua field alamat baru.', 'warning');
+            return;
+        }
+        
+        setButtonLoading(true, btn);
+
+        $.ajax({
+            url: '/api/addresses',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(newAddressData),
+            success: function(response) {
+                setButtonLoading(false, btn);
+                Swal.fire('Sukses', 'Alamat baru berhasil disimpan!', 'success');
+                
+                // Buat HTML untuk radio button alamat baru
+                const newAddress = response.data;
+                const newAddressHtml = `
+                    <div class="form-check p-3 border rounded mb-2">
+                        <input class="form-check-input adr-option" type="radio" name="addressId" id="adr_${newAddress.address_id}" value="${newAddress.address_id}">
+                        <label class="form-check-label" for="adr_${newAddress.address_id}">
+                            <strong><%= user.name %></strong><br>
+                            ${newAddress.address}, ${newAddress.city}, ${newAddress.postal_code}<br>
+                            Telp: ${newAddress.phone}
+                        </label>
+                    </div>`;
+                
+                // Tambahkan alamat baru ke daftar dan sembunyikan form
+                $('#newAddressToggle').before(newAddressHtml);
+                $('#newAddressFields').find('input').val(''); // Kosongkan form
+                $('#adr_new').prop('checked', false); // Uncheck pilihan 'tambah baru'
+                $('#adr_' + newAddress.address_id).prop('checked', true).trigger('change'); // Pilih alamat baru
+            },
+            error: function(xhr) {
+                setButtonLoading(false, btn);
+                const error = xhr.responseJSON || { message: 'Gagal menyimpan alamat.' };
+                Swal.fire('Oops...', error.message, 'error');
             }
         });
     });
 
-    checkoutForm.addEventListener('submit', async (event) => {
+    // --- Handler untuk Submit Pesanan Akhir ---
+    $('#checkoutForm').on('submit', function(event) {
         event.preventDefault();
+        const btn = $('#placeOrderBtn');
+        setButtonLoading(true, btn);
 
-        let addressIdToUse = selectedAddressIdInput.value;
-        let newAddressData = null;
+        const formData = {
+            addressId: $('input[name="addressId"]:checked').val(),
+            newAddress_phone: $('input[name="newAddress_phone"]').val(),
+            newAddress_address: $('input[name="newAddress_address"]').val(),
+            newAddress_city: $('input[name="newAddress_city"]').val(),
+            newAddress_postal_code: $('input[name="newAddress_postal_code"]').val(),
+            // Tambahkan data lain yang perlu dikirim, misal: shippingCost
+            shipping_cost: parseFloat($('input[name="shippingMethod"]:checked').val()) || 0
+        };
 
-        const addNewAddressRadio = document.getElementById('address_new');
-        const isNewAddressSelected = addNewAddressRadio && addNewAddressRadio.checked;
-
-        if (isNewAddressSelected || (existingAddressRadios.length === 0 && newAddressFields.style.display === 'block')) {
-            newAddressData = {
-                phone: newAddressPhoneInput.value,
-                address: document.getElementById('newAddressStreet').value,
-                city: document.getElementById('newAddressCity').value,
-                postal_code: document.getElementById('newAddressZip').value,
-            };
-
-            if (!newAddressData.phone || !newAddressData.address || !newAddressData.city || !newAddressData.postal_code) {
-                window.showToast('Please fill in all required fields for the new address.', 'warning');
-                return;
-            }
-
-            try {
-                const response = await fetch('/addresses', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newAddressData)
-                });
-                const data = await response.json();
-
-                if (response.ok) {
-                    addressIdToUse = data.addressId;
-                    if (!addressIdToUse) {
-                        window.showToast('Error: Could not retrieve new address ID.', 'error');
-                        return;
-                    }
-                } else {
-                    window.showToast('Failed to add new address: ' + (data.message || 'An error occurred.'), 'error');
-                    return;
-                }
-            } catch (error) {
-                console.error('Error adding new address:', error);
-                window.showToast('Network error while adding new address.', 'error');
-                return;
-            }
-        } else if (!addressIdToUse) {
-            window.showToast('Please select a shipping address or add a new one.', 'warning');
+        if (!formData.addressId) {
+            Swal.fire('Warning', 'Please select a shipping address.', 'warning');
+            setButtonLoading(false, btn);
             return;
         }
 
-        try {
-            const orderResponse = await fetch('/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ address_id: addressIdToUse })
-            });
-
-            if (orderResponse.redirected) {
-                window.location.href = orderResponse.url;
-            } else {
-                const orderData = await orderResponse.json();
-                window.showToast('Failed to create order: ' + (orderData.error || orderData.message || 'An error occurred.'), 'error');
+        $.ajax({
+            url: '/api/orders',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                window.location.href = response.redirectUrl;
+            },
+            error: function(xhr) {
+                setButtonLoading(false, btn);
+                const error = xhr.responseJSON || { message: 'An unknown error occurred.' };
+                Swal.fire('Order Failed', error.message, 'error');
             }
-        } catch (error) {
-            console.error('Error creating order:', error);
-            window.showToast('Network error while creating order.', 'error');
-        }
+        });
     });
-
-    const shippingRadios = document.querySelectorAll('input[name="shipping"]');
-    const shippingCostDisplay = document.getElementById('shippingCostDisplay');
-    const taxDisplay = document.getElementById('taxDisplay');
-    const finalTotalDisplay = document.getElementById('finalTotalDisplay');
-    const subtotal = parseFloat("<%= totalPrice %>");
-
-    let currentShippingCost = 0;
-    let currentTax = 0;
-
-    function calculateAndDisplayTotal() {
-        currentTax = 27;
-
-        let selectedShippingOption = document.querySelector('input[name="shipping"]:checked');
-        if (selectedShippingOption) {
-            switch (selectedShippingOption.id) {
-                case 'standard':
-                    currentShippingCost = 4.99;
-                    break;
-                case 'express':
-                    currentShippingCost = 12.99;
-                    break;
-                case 'free':
-                    currentShippingCost = 0;
-                    break;
-                default:
-                    currentShippingCost = 0;
-            }
-        }
-
-        const finalTotal = subtotal + currentShippingCost + currentTax;
-
-        shippingCostDisplay.textContent = `$${currentShippingCost.toFixed(2)}`;
-        taxDisplay.textContent = `$${currentTax.toFixed(2)}`;
-        finalTotalDisplay.textContent = `$${finalTotal.toFixed(2)}`;
-    }
-
-    shippingRadios.forEach(radio => {
-        radio.addEventListener('change', calculateAndDisplayTotal);
-    });
-
-    calculateAndDisplayTotal();
 });
 </script>
 

@@ -12,8 +12,22 @@
 
         <div class="col-lg-4 col-md-12 text-center">
           <div class="announcement-slider swiper init-swiper">
+            <!-- FIX: Tambahkan konfigurasi Swiper untuk slider pengumuman -->
+            <script type="application/json" class="swiper-config">
+              {
+                "loop": true,
+                "speed": 1000,
+                "autoplay": {
+                  "delay": 3000,
+                  "disableOnInteraction": false
+                },
+                "slidesPerView": 1,
+                "effect": "slide",
+                "direction": "vertical"
+              }
+            </script>
             <div class="swiper-wrapper">
-              <div class="swiper-slide">🚚 Free shipping on orders over $50</div>
+              <div class="swiper-slide">🚚 Free shipping on orders over Rp250.000</div>
               <div class="swiper-slide">💰 30 days money back guarantee.</div>
               <div class="swiper-slide">🎁 20% off on your first order</div>
             </div>
@@ -49,23 +63,6 @@
     </div>
   </div>
 
-<header id="header" class="header position-relative">
-
-  <div class="toast-container-custom position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
-    <div id="globalToast" class="toast-custom hide-custom" role="alert" aria-live="assertive" aria-atomic="true">
-      <div class="container-1-custom">
-        <i id="globalToastIcon" class="fas me-2"></i>
-      </div>
-      <div class="container-2-custom">
-        <p id="globalToastTitle" class="toast-title-custom">Notification</p>
-        <p id="globalToastBody" class="toast-body-custom"></p>
-      </div>
-      <button type="button" class="close-btn-custom">&times;</button>
-    </div>
-  </div>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
-</header>
   <!-- Main Header -->
   <div class="main-header">
     <div class="container-fluid container-xl">
@@ -90,9 +87,9 @@
             <i class="bi bi-heart"></i>
             <span class="badge">0</span>
           </a>
-          <a href="/carts" class="header-action-btn">
+          <a href="/carts" class="header-action-btn" id="cart-icon-link">
             <i class="bi bi-cart3"></i>
-            <span class="badge">0</span>
+            <span class="badge" id="cart-item-count"><%= cartItemCount || 0 %></span>
           </a>
           <i class="mobile-nav-toggle d-xl-none bi bi-list me-0"></i>
 
@@ -102,30 +99,39 @@
             </button>
             <div class="dropdown-menu">
               <div class="dropdown-header">
-                <h6>Welcome to <span class="sitename">Stay Awake</span></h6>
-                <p class="mb-0">Access account &amp; manage orders</p>
+                <% if (user) { %>
+                  <h6>Halo, <%= user.name %>!</h6>
+                  <p class="mb-0"><%= user.email %></p>
+                <% } else { %>
+                  <h6>Welcome to <span class="sitename">Stay Awake</span></h6>
+                  <p class="mb-0">Access account &amp; manage orders</p>
+                <% } %>
               </div>
               <div class="dropdown-body">
-                <a class="dropdown-item d-flex align-items-center" href="/users/account">
+                <a class="dropdown-item d-flex align-items-center" href="/users/me">
                   <i class="bi bi-person-circle me-2"></i>
                   <span>My Profile</span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center" href="/users/account">
+                <a class="dropdown-item d-flex align-items-center" href="/orders/me">
                   <i class="bi bi-bag-check me-2"></i>
                   <span>My Orders</span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center" href="/users/account">
-                  <i class="bi bi-eye me-2"></i>
+                <a class="dropdown-item d-flex align-items-center" href="/addresses">
+                  <i class="bi bi-geo-alt me-2"></i>
                   <span>My Address</span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center" href="/users/account">
+                <a class="dropdown-item d-flex align-items-center" href="/users/settings">
                   <i class="bi bi-gear me-2"></i>
                   <span>Settings</span>
                 </a>
               </div>
               <div class="dropdown-footer">
-                <a href="/users/login-register" class="btn btn-primary w-100 mb-2">Sign In</a>
-                <a href="/users/login-register" class="btn btn-outline-primary w-100">Register</a>
+                <% if (user) { %>
+                  <button id="logout-button" class="btn btn-outline-primary w-100">Logout</button>
+                <% } else { %>
+                  <a href="/auth/login" class="btn btn-primary w-100 mb-2">Sign In</a>
+                  <a href="/auth/register" class="btn btn-outline-primary w-100">Register</a>
+                <% } %>
               </div>
             </div>
           </div>
@@ -142,28 +148,8 @@
           <ul>
             <li><a href="/" class="active">Home</a></li>
             <li><a href="/products">Product</a></li>
-            <!-- <li><a href="/categories">Category</a></li> -->
             <li><a href="/carts">Cart</a></li>
-            <!-- <li><a href="/payment">Checkout</a></li> -->
-            <li><a href="/users/account">Account</a></li>
-            <!-- <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-              
-              <ul>
-                <li><a href="#">Dropdown 1</a></li>
-                <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                  <ul>
-                    <li><a href="#">Deep Dropdown 1</a></li>
-                    <li><a href="#">Deep Dropdown 2</a></li>
-                    <li><a href="#">Deep Dropdown 3</a></li>
-                    <li><a href="#">Deep Dropdown 4</a></li>
-                    <li><a href="#">Deep Dropdown 5</a></li>
-                  </ul>
-                </li>
-                <li><a href="#">Dropdown 2</a></li>
-                <li><a href="#">Dropdown 3</a></li>
-                <li><a href="#">Dropdown 4</a></li>
-              </ul>
-            </li> -->
+            <li><a href="/orders/me">My Orders</a></li>
             <li><a href="/about">About</a></li>
             <li><a href="/contact">Contact</a></li>
           </ul>
@@ -171,5 +157,55 @@
       </div>
     </div>
   </div>
-
 </header>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+      logoutButton.addEventListener('click', async () => {
+        try {
+          const response = await fetch('/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const data = await response.json();
+          if (response.ok) {
+            window.showAlert(data.message, 'success');
+            setTimeout(() => {
+              window.location.href = '/auth/login'; // Redirect ke halaman login setelah logout
+            }, 1500);
+          } else {
+            window.showAlert(data.message || 'Gagal logout.', 'error');
+          }
+        } catch (error) {
+          console.error('Logout error:', error);
+          window.showAlert('Terjadi kesalahan jaringan saat logout.', 'error');
+        }
+      });
+    }
+
+    // Fungsi untuk memperbarui jumlah item di badge keranjang
+    window.updateCartItemCount = async () => {
+        const cartItemCountSpan = document.getElementById('cart-item-count');
+        if (!cartItemCountSpan) return;
+        try {
+            const response = await fetch('/api/carts'); // Mengambil data keranjang
+            if (!response.ok) {
+                // If not logged in, or error, set count to 0
+                cartItemCountSpan.textContent = '0';
+                return;
+            }
+            const result = await response.json();
+            const totalItems = result.data.items ? result.data.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+            cartItemCountSpan.textContent = totalItems;
+        } catch (error) {
+            console.error('Error updating cart item count:', error);
+            cartItemCountSpan.textContent = '0'; // Set ke 0 jika ada error
+        }
+    };
+
+    // Panggil saat header dimuat
+    window.updateCartItemCount();
+  });
+</script>
