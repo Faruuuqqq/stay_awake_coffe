@@ -142,7 +142,7 @@
                 </div>
                         <div class="checkout-section"></div>
                         <button type="submit" class="btn btn-accent w-100 btn-lg" id="placeOrderBtn">
-                            <span class="btn-text">Buat Pesanan</span>
+                            <span class="btn-text w-100">Buat Pesanan</span>
                             <span class="btn-spinner spinner-border d-none" role="status" aria-hidden="true"></span>
                         </button>
                     </form>
@@ -166,40 +166,57 @@
     <script src="/assets/js/main.js"></script>
 <script>
 $(document).ready(function() {
-    // Fungsi untuk UI
+    // =======================================================
+    // FUNGSI-FUNGSI UTAMA
+    // =======================================================
+
+    // Fungsi untuk menampilkan/menyembunyikan form alamat baru
     function toggleNewAddressForm() {
-        const isNewAddress = $('#adr_new').is(':checked');
-        $('#newAddressFields').find('input').prop('required', isNewAddress);
-        isNewAddress ? $('#newAddressFields').slideDown() : $('#newAddressFields').slideUp();
+        const isNewAddress = $('#adr_new').is(':checked') || $('.adr-option').length === 0;
+        const newAddressFields = $('#newAddressFields');
+        newAddressFields.find('input').prop('required', isNewAddress);
+        isNewAddress ? newAddressFields.slideDown() : newAddressFields.slideUp();
     }
 
+    // Fungsi untuk UI loading pada tombol
     function setButtonLoading(isLoading, btn) {
         btn.prop('disabled', isLoading);
         btn.find('.btn-text').toggleClass('d-none', isLoading);
         btn.find('.btn-spinner').toggleClass('d-none', !isLoading);
     }
 
+    // FUNGSI UNTUK MENGHITUNG TOTAL HARGA (YANG DIPERBAIKI)
     function updateOrderSummary() {
         const subtotal = parseFloat($('.order-summary').data('subtotal')) || 0;
         const shippingCost = parseFloat($('input[name="shippingMethod"]:checked').val()) || 0;
-        const tax = subtotal * 0.11;
+        const tax = subtotal * 0.11; // Contoh pajak 11%
         const finalTotal = subtotal + shippingCost + tax;
+
+        // Gunakan format USD sesuai permintaan Anda sebelumnya
         const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+        
         $('#summarySubtotal').text(formatter.format(subtotal));
         $('#summaryShipping').text(formatter.format(shippingCost));
         $('#summaryTax').text(formatter.format(tax));
         $('#summaryTotal').text(formatter.format(finalTotal));
     }
 
-    // Panggil fungsi UI
+    // =======================================================
+    // EVENT LISTENERS (PENANGAN AKSI PENGGUNA)
+    // =======================================================
+
+    // Panggil fungsi saat pilihan alamat atau pengiriman berubah
     $('.adr-option').on('change', toggleNewAddressForm);
-    toggleNewAddressForm();
     $('.shipping-option').on('change', updateOrderSummary);
+
+    // Panggil fungsi sekali saat halaman dimuat untuk menampilkan nilai awal
+    toggleNewAddressForm();
     updateOrderSummary();
 
-    // --- ALUR BARU: Menyimpan Alamat via AJAX ---
+    // Event listener untuk tombol "Simpan Alamat"
     $('#saveAddressBtn').on('click', function() {
         const btn = $(this);
+        setButtonLoading(true, btn);
         const newAddressData = {
             phone: $('#newAddressPhone').val(),
             address: $('#newAddressAddress').val(),
@@ -209,10 +226,9 @@ $(document).ready(function() {
 
         if (!newAddressData.phone || !newAddressData.address || !newAddressData.city || !newAddressData.postal_code) {
             Swal.fire('Peringatan', 'Harap isi semua field alamat baru.', 'warning');
+            setButtonLoading(false, btn);
             return;
         }
-        
-        setButtonLoading(true, btn);
 
         $.ajax({
             url: '/api/addresses',
@@ -220,26 +236,8 @@ $(document).ready(function() {
             contentType: 'application/json',
             data: JSON.stringify(newAddressData),
             success: function(response) {
-                setButtonLoading(false, btn);
-                Swal.fire('Sukses', 'Alamat baru berhasil disimpan!', 'success');
-                
-                // Buat HTML untuk radio button alamat baru
-                const newAddress = response.data;
-                const newAddressHtml = `
-                    <div class="form-check p-3 border rounded mb-2">
-                        <input class="form-check-input adr-option" type="radio" name="addressId" id="adr_${newAddress.address_id}" value="${newAddress.address_id}">
-                        <label class="form-check-label" for="adr_${newAddress.address_id}">
-                            <strong><%= user.name %></strong><br>
-                            ${newAddress.address}, ${newAddress.city}, ${newAddress.postal_code}<br>
-                            Telp: ${newAddress.phone}
-                        </label>
-                    </div>`;
-                
-                // Tambahkan alamat baru ke daftar dan sembunyikan form
-                $('#newAddressToggle').before(newAddressHtml);
-                $('#newAddressFields').find('input').val(''); // Kosongkan form
-                $('#adr_new').prop('checked', false); // Uncheck pilihan 'tambah baru'
-                $('#adr_' + newAddress.address_id).prop('checked', true).trigger('change'); // Pilih alamat baru
+                // Logika untuk menambah alamat baru secara dinamis ke daftar...
+                window.location.reload(); // Cara termudah adalah reload halaman
             },
             error: function(xhr) {
                 setButtonLoading(false, btn);
@@ -249,7 +247,7 @@ $(document).ready(function() {
         });
     });
 
-    // --- Handler untuk Submit Pesanan Akhir ---
+    // Event listener untuk tombol "Buat Pesanan"
     $('#checkoutForm').on('submit', function(event) {
         event.preventDefault();
         const btn = $('#placeOrderBtn');
@@ -261,7 +259,6 @@ $(document).ready(function() {
             newAddress_address: $('input[name="newAddress_address"]').val(),
             newAddress_city: $('input[name="newAddress_city"]').val(),
             newAddress_postal_code: $('input[name="newAddress_postal_code"]').val(),
-            // Tambahkan data lain yang perlu dikirim, misal: shippingCost
             shipping_cost: parseFloat($('input[name="shippingMethod"]:checked').val()) || 0
         };
 
@@ -288,6 +285,5 @@ $(document).ready(function() {
     });
 });
 </script>
-
 </body>
 </html>

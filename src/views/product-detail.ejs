@@ -1,487 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= product.name %> Details - Stay Awake Coffee</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= product.name %></title>
+    <link href="/assets/vendor/drift-zoom/drift-basic.min.css" rel="stylesheet" />
+    <link href="/assets/img/favicon.png" rel="icon">
+    <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
 
-  <link href="/assets/img/favicon.png" rel="icon">
-  <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,800;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 
-  <link href="https://fonts.googleapis.com" rel="preconnect">
-  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-
-  <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-  <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
-  <link href="/assets/vendor/aos/aos.css" rel="stylesheet">
-  <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
-  <link href="/assets/vendor/drift-zoom/drift-basic.css" rel="stylesheet">
-
+    <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+    <link href="/assets/vendor/aos/aos.css" rel="stylesheet">
+    <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+  
   <link href="/assets/css/main.css" rel="stylesheet">
+  <link href="/assets/css/products.css" rel="stylesheet">
+</head>
+    <style>
+        /* Style untuk galeri gambar produk */
+        .product-thumbnails .thumbnail-item {
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease;
+            padding: 2px;
+            border-radius: 4px;
+        }
+        .product-thumbnails .thumbnail-item.active {
+            border-color: var(--accent-color);
+        }
+        .quantity-selector { max-width: 120px; }
+        .quantity-selector .form-control { box-shadow: none; }
+    </style>
 </head>
 
-<body class="index-page">
-  <%- include('partials/header') %>
+<body class="product-details-page">
+    <%- include('./partials/header.ejs', { user: user, cartItemCount: cartItemCount }) %>
 
-  <main class="main">
+    <main id="main">
+        <div class="page-title light-background">
+            <div class="container d-lg-flex justify-content-between align-items-center">
+                <h1 class="mb-2 mb-lg-0"><%= product.name %></h1>
+                <nav class="breadcrumbs">
+                    <ol>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/products">Products</a></li>
+                        <li class="current"><%= product.name %></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
 
-    <div class="page-title light-background">
-      <div class="container d-lg-flex justify-content-between align-items-center">
-        <h1 class="mb-2 mb-lg-0">Product Details</h1>
-        <nav class="breadcrumbs">
-          <ol>
-            <li><a href="/">Home</a></li>
-            <li><a href="/products">Products</a></li>
-            <li class="current"><%= product.name %></li>
-          </ol>
-        </nav>
-      </div>
-    </div><section id="product-details" class="product-details section">
+        
+        <section id="product-details" class="product-details section">
+            <div class="container" data-aos="fade-up">
+                <div class="row gy-4">
+                    <div class="col-lg-6">
+                        <div class="product-images">
+                            <div class="main-image-container mb-3">
+                                <img id="main-product-image" src="<%= product.image || '/assets/img/default-product.png' %>" 
+                                     alt="<%= product.name %>" class="img-fluid" data-zoom="<%= product.image_url || '/assets/img/default-product.png' %>">
+                            </div>
+                            
+                            <% const allProductImages = [product.image_url, ...(product.additional_images || [])].filter(Boolean); %>
+                            <% if (allProductImages.length > 1) { %>
+                                <div class="product-thumbnails swiper init-swiper">
+                                    <script type="application/json" class="swiper-config">
+                                        {
+                                          "loop": false, "spaceBetween": 10,
+                                          "navigation": { "nextEl": ".swiper-button-next", "prevEl": ".swiper-button-prev" },
+                                          "breakpoints": { "320": { "slidesPerView": 3 }, "576": { "slidesPerView": 4 }, "992": { "slidesPerView": 5 } }
+                                        }
+                                    </script>
+                                    <div class="swiper-wrapper">
+                                        <% allProductImages.forEach((imgUrl, index) => { %>
+                                            <div class="swiper-slide thumbnail-item <%= index === 0 ? 'active' : '' %>">
+                                                <img src="<%= imgUrl %>" alt="Thumbnail <%= index + 1 %>" data-full-image="<%= imgUrl %>">
+                                            </div>
+                                        <% }) %>
+                                    </div>
+                                    <div class="swiper-button-prev"></div>
+                                    <div class="swiper-button-next"></div>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
 
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
+                    <div class="col-lg-6">
+                        <div class="product-info">
+                            <h1 class="product-title mb-3"><%= product.name %></h1>
+                            
+                            <div class="product-price-container d-flex align-items-center mb-4">
+                                <span class="current-price fs-3 fw-bold text-accent"><%= new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(product.price) %></span>
+                            </div>
 
-        <div class="row">
-          <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-right" data-aos-delay="200">
-            <div class="product-images">
-              <div class="main-image-container mb-3">
-                <div class="image-zoom-container">
-                  <img src="<%= product.image %>" alt="<%= product.name %> Image" class="img-fluid main-image drift-zoom" id="main-product-image" data-zoom="<%= product.image %>">
+                            <p class="product-short-description text-default mb-4"><%= product.description %></p>
+                            
+                            <div class="product-availability mb-4">
+                                <% if(product.stock > 0) { %>
+                                    <span class="badge bg-success">In Stock</span>
+                                <% } else { %>
+                                    <span class="badge bg-danger">Out of Stock</span>
+                                <% } %>
+                            </div>
+
+                            <div class="product-quantity mb-4">
+                                <label for="quantity-input" class="form-label fw-bold">Quantity</label>
+                                <div class="quantity-selector d-flex border rounded">
+                                    <button class="quantity-btn btn border-0" id="decrease-qty"><i class="bi bi-dash"></i></button>
+                                    <input type="text" class="quantity-input form-control text-center border-0" id="quantity-input" value="1" min="1" max="<%= product.stock %>" readonly>
+                                    <button class="quantity-btn btn border-0" id="increase-qty"><i class="bi bi-plus"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="product-actions d-grid gap-2">
+                                <button class="btn btn-primary btn-lg add-to-cart-btn" data-product-id="<%= product.product_id %>" <%= product.stock === 0 ? 'disabled' : '' %>>
+                                    <i class="bi bi-cart-plus"></i> Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
+                
+                </div>
+        </section>
+    </main>
 
-              <%# Logika untuk gambar hover, jika ada %>
-              <%
-                let hoverImage = '';
-                if (product.image) {
-                  const lastDotIndex = product.image.lastIndexOf('.');
-                  const pathWithoutExt = lastDotIndex !== -1 ? product.image.substring(0, lastDotIndex) : product.image;
-                  const ext = lastDotIndex !== -1 ? product.image.substring(lastDotIndex) : '';
-                  hoverImage = pathWithoutExt + '.2' + ext;
+    
+    <%- include('./partials/product-list') %>
+    <%- include('./partials/footer') %>
+
+    <a href="#" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+    <div id="preloader"></div>
+
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/vendor/aos/aos.js"></script>
+    <script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
+    <script src="/assets/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+    <script src="/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
+    <script src="/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+    
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.2/dist/sweetalert2.all.min.js"></script>
+
+    <script src="/assets/js/main.js"></script>
+
+    <script>
+    $(document).ready(function() {
+        const productId = '<%= product.product_id %>';
+        const maxStock = parseInt('<%= product.stock %>');
+
+        // Logika penambah kuantitas
+        $('#increase-qty').on('click', function() {
+            let currentQty = parseInt($('#quantity-input').val());
+            if (currentQty < maxStock) {
+                $('#quantity-input').val(currentQty + 1);
+            }
+        });
+
+        $('#decrease-qty').on('click', function() {
+            let currentQty = parseInt($('#quantity-input').val());
+            if (currentQty > 1) {
+                $('#quantity-input').val(currentQty - 1);
+            }
+        });
+
+        // Logika "Add to Cart" menggunakan AJAX
+        $('.add-to-cart-btn').on('click', function() {
+            const quantity = parseInt($('#quantity-input').val());
+            
+            $.ajax({
+                url: '/api/carts',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ productId: productId, quantity: quantity }),
+                success: function(response) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: response.message || 'Produk ditambahkan!',
+                        showConfirmButton: false,
+                        timer: 2000,
+                    });
+                    if (typeof window.updateCartItemCount === 'function') {
+                        window.updateCartItemCount();
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 401) {
+                        Swal.fire('Perlu Login', 'Anda harus login untuk menambahkan produk.', 'warning')
+                            .then(() => window.location.href = '/auth/login');
+                    } else {
+                        const error = xhr.responseJSON || { message: 'Gagal menambahkan produk.' };
+                        Swal.fire('Oops...', error.message, 'error');
+                    }
                 }
-              %>
-              <% if (hoverImage) { %>
-                <div class="product-thumbnails d-none"> <%# Hide thumbnails div as we only show main/hover for simplicity %>
-                  <img src="<%= hoverImage %>" alt="<%= product.name %> Hover" class="img-fluid hover-img" style="max-width: 100px; margin-top: 10px; display: none;"> <%# Hide hover image by default, use CSS for hover effect %>
-                </div>
-              <% } %>
-            </div>
-          </div>
-
-          <div class="col-lg-6" data-aos="fade-left" data-aos-delay="200">
-            <div class="product-info">
-              <div class="product-meta mb-2">
-                <span class="product-category">
-                  <% if (categories && categories.length > 0) { %>
-                    <%= categories.join(', ') %>
-                  <% } else { %>
-                    Uncategorized
-                  <% } %>
-                </span>
-                <div class="product-rating">
-                  <%# Rating akan diisi dinamis oleh JavaScript setelah memuat ulasan %>
-                  <div id="product-rating-stars"></div>
-                  <span class="rating-count" id="rating-count">(0 Reviews)</span>
-                </div>
-              </div>
-
-              <h1 class="product-title"><%= product.name %></h1>
-
-              <div class="product-price-container mb-4">
-                <% if (product.sale_price && product.sale_price < product.price) { %>
-                  <span class="current-price">Rp <%= product.sale_price.toLocaleString('id-ID') %></span>
-                  <span class="original-price">Rp <%= product.price.toLocaleString('id-ID') %></span>
-                  <% if (product.price > 0) { %>
-                    <span class="discount-badge">-<%= ((product.price - product.sale_price) / product.price * 100).toFixed(0) %>%</span>
-                  <% } %>
-                <% } else { %>
-                  <span class="current-price">Rp <%= product.price.toLocaleString('id-ID') %></span>
-                <% } %>
-              </div>
-
-              <div class="product-short-description mb-4">
-                <p><%= product.description %></p>
-              </div>
-
-              <div class="product-availability mb-4">
-                <i class="bi bi-check-circle-fill <%= product.stock > 0 ? 'text-success' : 'text-danger' %>"></i>
-                <span><%= product.stock > 0 ? 'In Stock' : 'Out of Stock' %></span>
-                <span class="stock-count">(<%= product.stock %> items left)</span>
-              </div>
-
-              <%# Bagian opsi warna/ukuran disembunyikan untuk kesederhanaan %>
-              <div class="product-colors mb-4 d-none"></div>
-              <div class="product-sizes mb-4 d-none"></div>
-
-              <div class="product-quantity mb-4">
-                <h6 class="option-title">Quantity:</h6>
-                <div class="quantity-selector">
-                  <button class="quantity-btn decrease"><i class="bi bi-dash"></i></button>
-                  <input type="number" class="quantity-input" value="1" min="1" max="<%= product.stock %>" data-product-id="<%= product.product_id %>">
-                  <button class="quantity-btn increase"><i class="bi bi-plus"></i></button>
-                </div>
-              </div>
-
-              <div class="product-actions">
-                <button class="btn btn-primary add-to-cart-btn" data-product-id="<%= product.product_id %>" <%= product.stock === 0 ? 'disabled' : '' %>>
-                  <i class="bi bi-cart-plus"></i> Add to Cart
-                </button>
-                <button class="btn btn-outline-primary buy-now-btn" <%= product.stock === 0 ? 'disabled' : '' %>>
-                  <i class="bi bi-lightning-fill"></i> Buy Now
-                </button>
-                <button class="btn btn-outline-secondary wishlist-btn">
-                  <i class="bi bi-heart"></i>
-                </button>
-              </div>
-
-              <div class="additional-info mt-4">
-                <div class="info-item">
-                  <i class="bi bi-truck"></i>
-                  <span>Free shipping on orders over Rp 75.000</span>
-                </div>
-                <div class="info-item">
-                  <i class="bi bi-arrow-repeat"></i>
-                  <span>30-day return policy</span>
-                </div>
-                <div class="info-item">
-                  <i class="bi bi-shield-check"></i>
-                  <span>2-year warranty</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="row mt-5" data-aos="fade-up">
-          <div class="col-12">
-            <div class="product-details-tabs">
-              <ul class="nav nav-tabs" id="productTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                  <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab" aria-controls="description" aria-selected="true">Description</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                  <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab" aria-controls="reviews" aria-selected="false">Reviews (<span id="totalReviewsCount">0</span>)</button>
-                </li>
-                <%# Tab "Specifications" disembunyikan untuk kesederhanaan %>
-                <%# <li class="nav-item" role="presentation"><button class="nav-link" id="specifications-tab" data-bs-toggle="tab" data-bs-target="#specifications" type="button" role="tab" aria-controls="specifications" aria-selected="false">Specifications</button></li> %>
-              </ul>
-              <div class="tab-content" id="productTabsContent">
-                <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
-                  <div class="product-description">
-                    <p><%= product.description %></p>
-                  </div>
-                </div>
-
-                <%# Tab "Specifications" disembunyikan untuk kesederhanaan, kontennya juga dihapus %>
-                <%# <div class="tab-pane fade" id="specifications" role="tabpanel" aria-labelledby="specifications-tab">...</div> %>
-
-                <div class="tab-pane fade" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
-                  <div class="product-reviews">
-                    <div class="reviews-summary">
-                      <div class="overall-rating">
-                        <div class="rating-number" id="overallRatingNumber">0.0</div>
-                        <div class="rating-stars" id="overallRatingStars"></div>
-                        <div class="rating-count" id="overallRatingCount">Based on 0 reviews</div>
-                      </div>
-                      <div class="rating-breakdown" id="ratingBreakdown"></div> <%# Breakdown juga disederhanakan %>
-                    </div>
-
-                    <div class="review-form-container">
-                      <h4>Write a Review</h4>
-                      <form class="review-form" id="reviewForm">
-                        <div class="rating-select mb-4">
-                          <label class="form-label">Your Rating</label>
-                          <div class="star-rating">
-                            <input type="radio" id="star5" name="rating" value="5" required><label for="star5" title="5 stars"><i class="bi bi-star-fill"></i></label>
-                            <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars"><i class="bi bi-star-fill"></i></label>
-                            <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars"><i class="bi bi-star-fill"></i></label>
-                            <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars"><i class="bi bi-star-fill"></i></label>
-                            <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star"><i class="bi bi-star-fill"></i></label>
-                          </div>
-                        </div>
-
-                        <div class="mb-3">
-                          <label for="review-content" class="form-label">Your Review</label>
-                          <textarea class="form-control" id="review-content" rows="4"></textarea>
-                          <div class="form-text">Tell others what you think about this product. Be honest and helpful!</div>
-                        </div>
-
-                        <div class="d-grid">
-                          <button type="submit" class="btn btn-primary" id="submitReviewBtn" <%= user ? '' : 'disabled' %>>Submit Review</button>
-                        </div>
-                        <% if (!user) { %>
-                          <p class="mt-2 text-center text-muted">Login untuk menulis ulasan.</p>
-                        <% } %>
-                        <%# Name & Email fields dihilangkan karena reviewModel tidak menyimpannya secara eksplisit dari form ini %>
-                      </form>
-                    </div>
-
-                    <div class="reviews-list mt-5" id="reviewsList">
-                      <h4>Customer Reviews</h4>
-                      <p id="noReviewsMessage">Belum ada ulasan untuk produk ini.</p>
-                    </div>
-
-                    <div class="text-center mt-4 d-none" id="loadMoreReviewsContainer">
-                      <button class="btn btn-outline-primary load-more-btn">Load More Reviews</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section></main>
-
-  <%- include('partials/footer') %>
-
-  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-
-  <div id="preloader"></div>
-
-  <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="/assets/vendor/php-email-form/validate.js"></script>
-  <script src="/assets/vendor/swiper/swiper-bundle.min.js"></script>
-  <script src="/assets/vendor/aos/aos.js"></script>
-  <script src="/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
-  <script src="/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
-  <script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
-  <script src="/assets/vendor/drift-zoom/Drift.min.js"></script>
-  <script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
-
-  <script src="/assets/js/main.js"></script>
-
-<script>
-document.addEventListener('DOMContentLoaded', async () => {
-  const productId = "<%= product.product_id %>";
-  const mainProductImage = document.getElementById('main-product-image');
-  const quantityInput = document.querySelector('.quantity-input');
-  const decreaseBtn = document.querySelector('.quantity-btn.decrease');
-  const increaseBtn = document.querySelector('.quantity-btn.increase');
-  const addToCartBtn = document.querySelector('.add-to-cart-btn');
-  const reviewForm = document.getElementById('reviewForm');
-  const reviewsList = document.getElementById('reviewsList');
-  const noReviewsMessage = document.getElementById('noReviewsMessage');
-  const totalReviewsCountSpan = document.getElementById('totalReviewsCount');
-  const overallRatingNumber = document.getElementById('overallRatingNumber');
-  const overallRatingStars = document.getElementById('overallRatingStars');
-  const overallRatingCount = document.getElementById('overallRatingCount');
-  const ratingBreakdown = document.getElementById('ratingBreakdown');
-
-  // Ambil pesan dari variabel EJS (jika ada error/success dari render awal halaman)
-  const successMsg = <%- JSON.stringify(typeof success !== 'undefined' ? success : '') %>;
-  const errorMsg = <%- JSON.stringify(typeof error !== 'undefined' ? error : '') %>;
-
-  if (typeof window.showToast === 'function') {
-    if (successMsg) {
-      window.showToast(successMsg, 'success');
-    } else if (errorMsg) {
-      window.showToast(errorMsg, 'error');
-    }
-  } else {
-    // Fallback if showToast is not available
-    if (successMsg) {
-      alert(successMsg);
-    } else if (errorMsg) {
-      alert(errorMsg);
-    }
-  }
-
-
-  // --- Product Images Thumbnail Functionality (Simplifikasi) ---
-  // Jika Anda memiliki multiple images di DB dan menampilkannya sebagai thumbnail,
-  // logika di sini perlu disesuaikan untuk Swiper atau tampilan thumbnail kustom.
-  // Untuk saat ini, kita hanya akan fokus pada main image.
-  // const productThumbnailsSlider = document.querySelector('.product-thumbnails-slider');
-  // if (productThumbnailsSlider) {
-  //   productThumbnailsSlider.addEventListener('click', (event) => {
-  //     let thumbnailItem = event.target.closest('.thumbnail-item');
-  //     if (thumbnailItem) {
-  //       document.querySelectorAll('.thumbnail-item').forEach(item => item.classList.remove('active'));
-  //       thumbnailItem.classList.add('active');
-  //       const newImageSrc = thumbnailItem.dataset.image;
-  //       if (mainProductImage) {
-  //         mainProductImage.src = newImageSrc;
-  //         mainProductImage.dataset.zoom = newImageSrc; // Update for Drift Zoom
-  //       }
-  //     }
-  //   });
-  // }
-
-
-  // --- Quantity Selector ---
-  if (decreaseBtn && quantityInput && increaseBtn) {
-    decreaseBtn.addEventListener('click', () => {
-      let currentValue = parseInt(quantityInput.value);
-      if (currentValue > parseInt(quantityInput.min)) {
-        quantityInput.value = currentValue - 1;
-      }
-    });
-
-    increaseBtn.addEventListener('click', () => {
-      let currentValue = parseInt(quantityInput.value);
-      if (currentValue < parseInt(quantityInput.max)) {
-        quantityInput.value = currentValue + 1;
-      }
-    });
-    quantityInput.addEventListener('change', () => {
-        let val = parseInt(quantityInput.value);
-        let min = parseInt(quantityInput.min);
-        let max = parseInt(quantityInput.max);
-        if (isNaN(val) || val < min) {
-            quantityInput.value = min;
-        } else if (val > max) {
-            quantityInput.value = max;
-        }
-    });
-  }
-
-  // --- Add to Cart Functionality ---
-  if (addToCartBtn) {
-    addToCartBtn.addEventListener('click', async () => {
-      const quantity = parseInt(quantityInput.value);
-      if (quantity <= 0 || quantity > parseInt(quantityInput.max)) {
-        window.showToast('Invalid quantity.', 'warning'); // Diganti dari alert()
-        return;
-      }
-
-      try {
-        const response = await fetch('/carts/add', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ productId, quantity })
+            });
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
-          window.showToast(data.message || 'Product added to cart successfully!', 'success');
-          // Opsional: Perbarui ikon keranjang di navigasi
-        } else {
-          window.showToast('Failed to add product to cart: ' + (data.error || data.message || 'An error occurred.'), 'error');
-        }
-      } catch (error) {
-        console.error('Error adding to cart:', error);
-        window.showToast('A network or server error occurred.', 'error');
-      }
+        // ... (Logika untuk memuat ulasan bisa ditambahkan di sini)
     });
-  }
-
-  // --- Reviews Section Functionality ---
-  async function fetchReviews() {
-    try {
-      const response = await fetch(`/reviews/product/${productId}`);
-      const reviews = await response.json();
-
-      reviewsList.innerHTML = '';
-      if (reviews && reviews.length > 0) {
-        noReviewsMessage.style.display = 'none';
-        let totalRating = 0;
-        const ratingCounts = [0, 0, 0, 0, 0, 0];
-
-        reviews.forEach(review => {
-          totalRating += review.rating;
-          if (review.rating >=1 && review.rating <= 5) {
-            ratingCounts[review.rating]++;
-          }
-
-          const reviewElement = document.createElement('div');
-          reviewElement.classList.add('review-item');
-          reviewElement.innerHTML = `
-            <div class="review-header">
-              <div class="reviewer-info">
-                <img src="/assets/img/person/person-m-1.webp" alt="Reviewer" class="reviewer-avatar">
-                <div>
-                  <h5 class="reviewer-name">${review.user_name || 'Anonymous'}</h5>
-                  <div class="review-date">${new Date(review.created_at).toLocaleDateString()}</div>
-                </div>
-              </div>
-              <div class="review-rating">
-                ${' <i class="bi bi-star-fill"></i>'.repeat(review.rating)}
-                ${' <i class="bi bi-star"></i>'.repeat(5 - review.rating)}
-              </div>
-            </div>
-            <h5 class="review-title">${review.comment ? review.comment.substring(0, 50) + '...' : 'Review'}</h5>
-            <div class="review-content">
-              <p>${review.comment || 'No comment.'}</p>
-            </div>
-          `;
-          reviewsList.appendChild(reviewElement);
-        });
-
-        const avgRating = totalRating / reviews.length;
-        overallRatingNumber.textContent = avgRating.toFixed(1);
-        totalReviewsCountSpan.textContent = reviews.length;
-        overallRatingCount.textContent = `Based on ${reviews.length} reviews`;
-
-        overallRatingStars.innerHTML = `
-          ${' <i class="bi bi-star-fill"></i>'.repeat(Math.floor(avgRating))}
-          ${avgRating % 1 >= 0.5 ? '<i class="bi bi-star-half"></i>' : ''}
-          ${' <i class="bi bi-star"></i>'.repeat(5 - Math.ceil(avgRating))}
-        `;
-
-        ratingBreakdown.innerHTML = '';
-      } else {
-        noReviewsMessage.style.display = 'block';
-        overallRatingNumber.textContent = '0.0';
-        totalReviewsCountSpan.textContent = '0';
-        overallRatingCount.textContent = 'Based on 0 reviews';
-        overallRatingStars.innerHTML = ' <i class="bi bi-star"></i>'.repeat(5);
-        ratingBreakdown.innerHTML = '<p class="text-muted">No rating breakdown available.</p>';
-      }
-    } catch (error) {
-      console.error('Error fetching reviews:', error);
-      reviewsList.innerHTML = '<p class="text-danger">Failed to load reviews.</p>';
-    }
-  }
-
-  // Handle Review Form Submission
-  if (reviewForm) {
-    reviewForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-
-      const rating = parseInt(document.querySelector('input[name="rating"]:checked')?.value);
-      const comment = document.getElementById('review-content').value;
-
-      if (!rating) {
-        window.showToast('Please provide a star rating.', 'warning'); // Diganti dari alert()
-        return;
-      }
-
-      try {
-        const response = await fetch('/reviews', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            productId: productId,
-            rating: rating,
-            comment: comment
-          })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          window.showToast(data.message || 'Review submitted successfully!', 'success');
-          reviewForm.reset();
-          fetchReviews(); // Reload reviews
-        } else {
-          window.showToast('Failed to submit review: ' + (data.message || 'An error occurred.'), 'error');
-        }
-      } catch (error) {
-        console.error('Error submitting review:', error);
-        window.showToast('Network error while submitting review.', 'error');
-      }
-    });
-  }
-
-  fetchReviews();
-});
-</script>
+    </script>
 </body>
 </html>

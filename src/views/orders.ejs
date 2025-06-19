@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="description" content="Detail pesanan Anda di Stay Awake Coffee. Lihat rincian produk, alamat pengiriman, status pembayaran, dan lacak pengiriman.">
+    <meta name="keywords" content="detail pesanan, lacak pesanan, status order, riwayat pembelian, kopi">
+
+    <!-- Favicons -->
+    <link href="/assets/img/favicon.png" rel="icon">
+    <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,800;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    
+    <!-- Vendor CSS Files -->
+    <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="/assets/vendor/aos/aos.css" rel="stylesheet">
+    <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+    <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+    <link href="/assets/vendor/drift-zoom/drift-basic.min.css" rel="stylesheet">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.2/dist/sweetalert2.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <!-- Template Main CSS File -->
+    <link href="/assets/css/main.css" rel="stylesheet">
+    
+    <style>
+        /* Styling khusus untuk halaman detail order */
+        .order-confirmation .confirmation-header .order-number strong {
+            color: var(--accent-color);
+        }
+        .order-confirmation .order-summary .order-items .item-row .item-image {
+            background-color: var(--background-color); /* Untuk placeholder gambar */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .order-confirmation .order-summary .order-items .item-row .item-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .order-confirmation .order-details .shipping-method {
+            background-color: color-mix(in srgb, var(--accent-color), transparent 90%);
+            color: var(--accent-color);
+        }
+        .order-confirmation .order-summary .order-totals .total-row {
+            color: var(--heading-color);
+            border-top: 1px dashed color-mix(in srgb, var(--default-color), transparent 80%);
+        }
+        .loading-spinner-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+        }
+        /* Status Badges */
+        .badge.pending { background-color: #ffc107; color: #343a40; } /* yellow */
+        .badge.processing { background-color: #0d6efd; } /* blue */
+        .badge.shipped { background-color: #17a2b8; } /* info */
+        .badge.delivered { background-color: #28a745; } /* green */
+        .badge.cancelled { background-color: #dc3545; } /* red */
+        .badge.failed { background-color: #6c757d; } /* gray */
+        .badge.paid { background-color: #28a745; } /* green */
+        .badge.expired { background-color: #ffc107; } /* yellow */
+    </style>
+</head>
+<body class="order-confirmation-page">
+    <!-- Header -->
+    <%- include('./partials/header.ejs', { user: user, cartItemCount: cartItemCount }) %>
+
+    <main id="main">
+        <div class="page-title light-background">
+            <div class="container d-lg-flex justify-content-between align-items-center">
+                <h1 class="mb-2 mb-lg-0">Order Details</h1>
+                <nav class="breadcrumbs">
+                    <ol>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/orders/me">My Orders</a></li>
+
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <section id="order-confirmation" class="order-confirmation section">
+            <div class="container" data-aos="fade-up">
+                <div id="order-details-container">
+                    <div class="loading-spinner-container">
+                        <div class="spinner-border text-primary loading-spinner" role="status">
+                            <span class="visually-hidden">Memuat pesanan...</span>
+                        </div>
+                        <p class="text-center text-muted">Memuat detail pesanan...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <%- include('./partials/footer.ejs') %>
+
+    <!-- Vendor JS Files -->
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/vendor/aos/aos.js"></script>
+    <script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
+    <script src="/assets/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+    <script src="/assets/vendor/php-email-form/validate.js"></script>
+    <script src="/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
+    <script src="/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+    <script src="/assets/vendor/drift-zoom/Drift.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.2/dist/sweetalert2.all.min.js"></script>
+
+    <!-- Template Main JS File -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="/assets/js/main.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const orderDetailsContainer = document.getElementById('order-details-container');
+            const pathSegments = window.location.pathname.split('/');
+            const orderIdFromUrl = parseInt(pathSegments[pathSegments.length - 1]); // Ambil ID dari URL /orders/:id
+
+            if (isNaN(orderIdFromUrl)) {
+                orderDetailsContainer.innerHTML = `<p class="text-center text-danger py-5">Invalid Order ID in URL.</p>`;
+                if (typeof window.showAlert === 'function') {
+                    window.showAlert('ID Pesanan tidak valid di URL.', 'error');
+                }
+                return;
+            }
+
+            // Fungsi untuk mengambil dan merender detail pesanan
+            async function fetchAndRenderOrderDetails() {
+                orderDetailsContainer.innerHTML = `
+                    <div class="loading-spinner-container">
+                        <div class="spinner-border text-primary loading-spinner" role="status">
+                            <span class="visually-hidden">Memuat pesanan...</span>
+                        </div>
+                        <p class="text-center text-muted">Memuat detail pesanan...</p>
+                    </div>
+                `;
+                try {
+                    const token = localStorage.getItem('jwtToken');
+                    // console.log('Order Details Page: Token for fetching order:', token); // Log token
+
+                    if (!token) {
+                        if (typeof window.showAlert === 'function') {
+                            window.showAlert('Anda perlu login untuk melihat detail pesanan.', 'warning');
+                            setTimeout(() => { window.location.href = '/auth/login'; }, 1500);
+                        }
+                        return;
+                    }
+
+                    const response = await fetch(`/api/orders/${orderIdFromUrl}`, { // Panggil API dengan ID pesanan
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error('Order Details Page: API Error Response for Order:', errorData);
+                        throw new Error(errorData.message || 'Gagal memuat detail pesanan.');
+                    }
+                    const result = await response.json();
+                    const order = result.data; // Asumsi result.data langsung objek order
+
+                    if (order) {
+                        const orderHtml = `
+                            <div class="confirmation-header text-center mb-5">
+                                <div class="success-icon mb-3"><i class="bi bi-check-circle-fill text-success"></i></div>
+                                <h2 class="mb-3">Thank You for Your Order!</h2>
+                                <p class="lead text-muted">Pesanan Anda #<strong class="text-primary">${order.order_id}</strong> telah berhasil ditempatkan.</p>
+                                <p class="order-number text-muted">Kami telah mengirimkan konfirmasi pesanan ke email Anda.</p>
+                            </div>
+
+                            <div class="row g-4">
+                                <div class="col-lg-6">
+                                    <div class="order-details bg-white rounded-3 shadow-sm p-4 text-start">
+                                        <h4 class="pb-3 mb-3 border-bottom">Order Information</h4>
+                                        <div class="mb-3">
+                                            <strong>Order ID:</strong> #${order.order_id}<br>
+                                            <strong>Order Date:</strong> ${new Date(order.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}<br>
+                                            <strong>Order Status:</strong> <span class="badge bg-info text-capitalize ${order.status}">${order.status}</span>
+                                        </div>
+                                        <h4 class="pb-3 mb-3 border-bottom">Shipping Address</h4>
+                                        <address class="mb-3">
+                                            ${order.shipping_address_street}<br>
+                                            ${order.shipping_address_city}, ${order.shipping_address_postal_code}<br>
+                                            Phone: ${order.address_phone}
+                                        </address>
+                                        <div class="shipping-method py-2 px-3 rounded-pill d-inline-block">Standard Shipping</div>
+                                        ${order.payment_status ? `
+                                            <h4 class="pb-3 mb-3 border-bottom mt-3">Payment Status</h4>
+                                            <div class="payment-info">
+                                                <strong>Method:</strong> ${order.payment_method}<br>
+                                                <strong>Status:</strong> <span class="badge bg-info text-capitalize ${order.payment_status}">${order.payment_status}</span><br>
+                                                ${order.payment_transaction_id ? `<strong>Transaction ID:</strong> ${order.payment_transaction_id}<br>` : ''}
+                                                ${order.payment_paid_at ? `<strong>Paid At:</strong> ${new Date(order.payment_paid_at).toLocaleString('id-ID')}` : ''}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="order-summary bg-white rounded-3 shadow-sm p-4 text-start">
+                                        <h4 class="pb-3 mb-3 border-bottom">Order Summary</h4>
+                                        <div class="order-items mb-4">
+                                            ${order.items && order.items.length > 0 ?
+                                                order.items.map(item => `
+                                                    <div class="item-row d-flex align-items-center py-3 border-bottom">
+                                                        <div class="item-image me-3">
+                                                            <img src="${item.image || 'https://placehold.co/80x80/EAEAEA/555555?text=Product'}" alt="${item.name}" class="img-fluid rounded-2" onerror="this.onerror=null;this.src='https://placehold.co/80x80/EAEAEA/555555?text=Product';">
+                                                        </div>
+                                                        <div class="item-details flex-grow-1">
+                                                            <h5 class="mb-1">${item.name}</h5>
+                                                            <p class="text-muted mb-2">Quantity: ${item.quantity}</p>
+                                                            <div class="quantity-price fs-6 fw-bold text-accent">Rp${new Intl.NumberFormat('id-ID').format(item.price * item.quantity)}</div>
+                                                        </div>
+                                                    </div>
+                                                `).join('') : '<p class="text-muted text-center py-3">Tidak ada item dalam pesanan ini.</p>'
+                                            }
+                                        </div>
+                                        <div class="order-totals">
+                                            <div class="d-flex justify-content-between mb-2"><span>Subtotal:</span><span>Rp${new Intl.NumberFormat('id-ID').format(order.total_price)}</span></div>
+                                            <div class="d-flex justify-content-between mb-2"><span>Shipping:</span><span>Rp15.000</span></div> <%# Asumsi biaya pengiriman tetap %>
+                                            <div class="d-flex justify-content-between mb-2"><span>Discount:</span><span>-Rp0</span></div>
+                                            <div class="total-row d-flex justify-content-between pt-3 mt-3"><span>Total:</span><span>Rp${new Intl.NumberFormat('id-ID').format(order.total_price + 15000)}</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="next-steps bg-white rounded-3 shadow-sm p-4 mt-4 text-start">
+                                <h4 class="pb-3 mb-3 border-bottom">What's Next?</h4>
+                                <p class="text-muted">Kami akan segera memproses pesanan Anda. Anda akan menerima email notifikasi ketika pesanan Anda dikirim.</p>
+                                <div class="tracking-info d-flex align-items-center justify-content-center text-muted mb-4">
+                                    <i class="bi bi-box-seam me-2"></i>
+                                    <span>Lacak pengiriman Anda segera setelah tersedia.</span>
+                                </div>
+                                <div class="action-buttons text-center d-flex flex-column flex-md-row justify-content-center gap-3">
+                                    <a href="/products" class="btn btn-accent"><i class="bi bi-bag me-2"></i>Continue Shopping</a>
+                                    <a href="/orders/me" class="btn btn-outline-primary"><i class="bi bi-list-check me-2"></i>View All My Orders</a>
+                                </div>
+                            </div>
+                        `;
+                        orderDetailsContainer.innerHTML = orderHtml;
+                    } else {
+                        orderDetailsContainer.innerHTML = `
+                            <div class="col-12 text-center py-5">
+                                <div class="error-icon mb-3"><i class="bi bi-exclamation-circle-fill text-danger"></i></div>
+                                <h2 class="mb-3">Order Not Found or Access Denied</h2>
+                                <p class="lead text-muted">Pesanan yang Anda cari tidak ditemukan atau Anda tidak memiliki izin untuk melihatnya.</p>
+                                <a href="/orders/me" class="btn btn-accent mt-3">Back to My Orders</a>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Error fetching order details:', error);
+                    orderDetailsContainer.innerHTML = `
+                        <p class="text-center text-danger py-5">Gagal memuat detail pesanan: ${error.message}</p>
+                    `;
+                    if (typeof window.showAlert === 'function') {
+                        window.showAlert(`Gagal memuat detail pesanan: ${error.message}`, 'error');
+                    } else {
+                        console.error("window.showAlert is not defined. Falling back to alert.");
+                        alert(`Gagal memuat detail pesanan: ${error.message}`);
+                    }
+                }
+            }
+
+            // Panggil fungsi untuk mengambil detail pesanan saat DOM dimuat
+            fetchAndRenderOrderDetails();
+
+            // Panggil updateCartItemCount saat DOM fully loaded
+            if (typeof window.updateCartItemCount === 'function') {
+                window.updateCartItemCount();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -90,12 +90,38 @@
                                                     <a href="/products/<%= product.product_id %>"><%= product.name %></a>
                                                 </h3>
                                                 <div class="product-price">
-                                                    <span>Rp<%= new Intl.NumberFormat('id-ID').format(product.price) %></span>
+                                                    <span><%= new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(product.price) %></span>
                                                 </div>
                                                 <div class="product-rating-container">
+                                                    <%
+                                                
+                                                        const avgRating = (Math.random() * 1.5 + 3.5).toFixed(1); 
+                                                        const reviewCount = product.reviewCount || Math.floor(Math.random() * 150);
+
+                                                        // Menghitung jumlah masing-masing bintang
+                                                        const fullStars = Math.floor(avgRating);
+                                                        const hasHalfStar = (avgRating % 1) >= 0.5;
+                                                        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+                                                    %>
+
                                                     <div class="rating-stars">
-                                                        </div>
-                                                    <span class="rating-number">(<%= product.reviewCount || 0 %>)</span>
+                                                        <%# Loop untuk bintang penuh %>
+                                                        <% for(let i = 0; i < fullStars; i++) { %>
+                                                            <i class="bi bi-star-fill"></i>
+                                                        <% } %>
+
+                                                        <%# Cek apakah ada setengah bintang %>
+                                                        <% if(hasHalfStar) { %>
+                                                            <i class="bi bi-star-half"></i>
+                                                        <% } %>
+
+                                                        <%# Loop untuk bintang kosong %>
+                                                        <% for(let i = 0; i < emptyStars; i++) { %>
+                                                            <i class="bi bi-star"></i>
+                                                        <% } %>
+                                                    </div>
+                                                    
+                                                    <span class="rating-number">(<%= reviewCount %>)</span>
                                                 </div>
                                             </div>
                                         </div>

@@ -59,7 +59,7 @@
                                         </div>
                                         <button type="submit" class="btn btn-primary w-100">Login</button>
                                         <div class="text-center mt-3">
-                                            <a href="#" class="forgot-password">Forgot Password?</a>
+                                            <a href="/forgot-password" class="forgot-password">Forgot Password?</a>
                                         </div>
                                     </form>
                                 </div>
@@ -80,6 +80,14 @@
                                         <div class="mb-3">
                                             <label for="confirmPassword" class="form-label">Confirm Password</label>
                                             <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                                        </div>
+                                        <div class="mb-3 form-check">
+                                            <input type="checkbox" class="form-check-input" id="agreeTerms" required>
+                                            <label class="form-check-label" for="agreeTerms">
+                                                Saya setuju dengan
+                                                <a href="/terms" target="_blank">Syarat & Ketentuan</a> serta 
+                                                <a href="/privacy" target="_blank">Kebijakan Privasi</a>.
+                                            </label>
                                         </div>
                                         <button type="submit" class="btn btn-primary w-100">Register</button>
                                     </form>
@@ -108,6 +116,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.2/dist/sweetalert2.all.min.js"></script>
 
     <script src="/assets/js/main.js"></script>
-
+    
     </body>
 </html>
