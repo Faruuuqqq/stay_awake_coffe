@@ -4,12 +4,10 @@ const path = require('path');
 const cors = require('cors');
 require("dotenv").config();
 
-// Impor middleware dan router
 const { identifyUser } = require('./middlewares/authMiddleware');
 const { getCommonRenderData } = require('./utils/renderHelpers');
 const errorMiddleware = require('./middlewares/errorMiddleware');
 
-// Impor semua router Anda
 const appRoutes = require("./routes/appRoutes");
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
@@ -24,7 +22,7 @@ const addressRoutes = require("./routes/addressRoutes");
 
 const app = express();
 
-// Middleware dasar
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -37,13 +35,9 @@ app.use(cors({
     credentials: true
 }));
 
-// Gunakan middleware 'identifyUser' secara global untuk setiap request
-// INI WAJIB ADA SEBELUM PENDAFTARAN RUTE
-app.use("/", appRoutes);
 app.use(identifyUser);
 
-// --- Pendaftaran Rute Aplikasi ---
-// app.use("/", appRoutes);
+app.use("/", appRoutes);
 app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/products", productRoutes);
@@ -58,7 +52,6 @@ app.use("/addresses", addressRoutes);
 
 // Rute API (JSON Endpoints)
 // Ini adalah rute yang digunakan oleh JavaScript frontend untuk mengambil/mengirim data JSON
-// Perhatikan awalan '/api'
 app.use('/api/products', productRoutes); // Menangani /api/products, /api/products/:id
 app.use('/api/carts', cartRoutes);     // Menangani /api/carts, /api/carts/:productId
 app.use('/api/auth', authRoutes);      // Menangani /api/auth/login, /api/auth/register
@@ -70,8 +63,6 @@ app.use('/api/shipments', shipmentRoutes); // Menangani /api/shipments
 app.use('/api/reviews', reviewRoutes); // Menangani /api/reviews
 app.use('/api/addresses', addressRoutes); // Menangani /api/addresses
 
-
-// Middleware Error Handling (HARUS DI BAGIAN PALING AKHIR, SEBELUM HANDLER 404)
 app.use(errorMiddleware);
 
 // Middleware untuk menangani error 404 (Not Found)
@@ -81,7 +72,7 @@ app.use(async (req, res, next) => {
             title: 'Halaman Tidak Ditemukan' 
         });
         
-        res.status(404).render('error', {
+        res.status(404).render('404', {
             ...commonData,
             message: 'Halaman yang Anda cari tidak ditemukan.',
             error: { status: 404 }

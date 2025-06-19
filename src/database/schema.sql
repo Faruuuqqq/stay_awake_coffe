@@ -1,6 +1,6 @@
--- Active: 1737296288896@@127.0.0.1@3306@mysql
+-- Hapus database jika sudah ada untuk memulai dari awal (opsional, hati-hati di produksi)
+DROP DATABASE IF EXISTS stay_awake_db;
 CREATE DATABASE IF NOT EXISTS stay_awake_db;
-
 USE stay_awake_db;
 
 -- USERS
@@ -20,13 +20,14 @@ CREATE TABLE addresses (
   address TEXT,
   city VARCHAR(100),
   postal_code VARCHAR(10),
-  FOREIGN KEY (user_id) REFERENCES users(user_id)
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- CATEGORIES
 CREATE TABLE categories (
   category_id INT PRIMARY KEY AUTO_INCREMENT,
-  name VARCHAR(100)
+  name VARCHAR(100),
+  image VARCHAR(255) NULL
 );
 
 -- PRODUCTS
@@ -35,25 +36,30 @@ CREATE TABLE products (
   name VARCHAR(100),
   description TEXT,
   price DECIMAL(10,2),
-  image TEXT,
+  sale_price DECIMAL(10,2) NULL, -- Menambahkan kolom harga diskon
+  image VARCHAR(255), -- Mengubah TEXT menjadi VARCHAR(255) untuk konsistensi
+  hover_image VARCHAR(255) NULL, -- Menambahkan kolom gambar hover
   stock INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- MANY-TO-MANY: PRODUCTS ↔ CATEGORIES
+-- MANY-TO-MANY: PRODUCTS <-> CATEGORIES
 CREATE TABLE product_categories (
   product_id INT,
   category_id INT,
   PRIMARY KEY (product_id, category_id),
-  FOREIGN KEY (product_id) REFERENCES products(product_id),
-  FOREIGN KEY (category_id) REFERENCES categories(category_id)
+  FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
+  FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE
 );
 
 -- CARTS
 CREATE TABLE carts (
   cart_id INT PRIMARY KEY AUTO_INCREMENT,
-  user_id INT UNIQUE,
-  FOREIGN KEY (user_id) REFERENCES users(user_id)
+  user_id INT UNIQUE, -- Setiap user hanya punya 1 keranjang
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- CART ITEMS
@@ -70,24 +76,24 @@ CREATE TABLE cart_items (
 CREATE TABLE orders (
   order_id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT,
-  address_id INT,
+  address_id INT, -- Dibuat bisa NULL jika alamat dihapus
   total_price DECIMAL(10,2),
   status ENUM('pending', 'completed') DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(user_id),
-  FOREIGN KEY (address_id) REFERENCES addresses(address_id)
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL,
+  FOREIGN KEY (address_id) REFERENCES addresses(address_id) ON DELETE SET NULL
 );
 
 -- ORDER ITEMS
 CREATE TABLE order_items (
-  order_items_id INT PRIMARY KEY AUTO_INCREMENT,
+  order_item_id INT PRIMARY KEY AUTO_INCREMENT, -- Mengganti nama kolom agar konsisten
   order_id INT,
   product_id INT,
   quantity INT,
   total_price DECIMAL(10,2),
-  FOREIGN KEY (order_id) REFERENCES orders(order_id),
-  FOREIGN KEY (product_id) REFERENCES products(product_id)
+  FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
+  FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE SET NULL
 );
 
 -- PAYMENTS
@@ -98,9 +104,10 @@ CREATE TABLE payments (
   status ENUM('pending', 'paid', 'failed', 'expired'),
   transaction_id VARCHAR(100),
   amount_paid DECIMAL(10,2),
-  paid_at TIMESTAMP,
+  paid_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (order_id) REFERENCES orders(order_id)
+  FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
 
 -- SHIPMENT

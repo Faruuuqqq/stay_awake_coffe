@@ -53,7 +53,7 @@
       text: message,
       confirmButtonText: 'OK',
       customClass: {
-        confirmButton: 'btn btn-primary' // Sesuaikan dengan kelas tombol Bootstrap Anda
+        confirmButton: 'btn btn-accent' // Sesuaikan dengan kelas tombol Bootstrap Anda
       },
       buttonsStyling: false // Penting agar customClass berfungsi
     });
@@ -257,6 +257,7 @@
     }
   }
 
+  
   /**
    * Initialize Bootstrap tooltips (exposed globally for potential use)
    */
@@ -307,27 +308,6 @@
             }
         }
     });
-  }
-  /**
-   * Consolidated Global Function Initialization on Window Load
-   */
-  function initGlobalFunctions() {
-    // Jalankan toggleScrolled di awal
-    toggleScrolled(); 
-    // Inisialisasi semua Swiper (termasuk announcement-slider)
-    initSwiper(); 
-    // Inisialisasi AOS
-    aosInit();
-    // Inisialisasi GLightbox
-    initGlightbox();
-    // Inisialisasi PureCounter
-    initPureCounter();
-    // Inisialisasi Isotope Layouts
-    initIsotopeLayouts();
-    // Inisialisasi Tooltips
-    window.initTooltips(); 
-    // Toggle scroll top button
-    toggleScrollTop(); 
   }
 
   // Tambahkan event listener untuk menjalankan semua fungsi global saat halaman dimuat
