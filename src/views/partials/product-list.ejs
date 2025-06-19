@@ -1,130 +1,166 @@
-<section id="product-list" class="product-list section">
-  <div class="container isotope-layout" data-aos="fade-up" data-aos-delay="100" data-default-filter="*" data-layout="masonry" data-sort="original-order">
-    <div class="row">
-      <div class="col-12">
-        <div class="product-filters isotope-filters mb-5 d-flex justify-content-center" data-aos="fade-up">
-          <ul class="d-flex flex-wrap gap-2 list-unstyled">
-            <li class="filter-active" data-filter="*">All</li>
-            <% categories.forEach(category => { %>
-              <li data-filter=".filter-<%= category.name %>"><%= category.name %></li>
-            <% }) %>
-          </ul>
+    <link href="/assets/css/main.css" rel="stylesheet" />
+    <link href="/assets/css/products.css" rel="stylesheet" />
+    <section id="product-list" class="product-list section">
+    <div class="container" data-aos="fade-up">
+        <div class="section-title">
+            <h2>Our Recommendation Products</h2>
+            <p>Discover another handpicked selection of premium coffee beans.</p>
         </div>
-      </div>
-    </div>
-    <div class="row product-container isotope-container" data-aos="fade-up" data-aos-delay="200">
-      <!-- Dynamically render products from database -->
-      <% products.forEach(product => { %>
-        <div class="col-md-6 col-lg-3 product-item isotope-item filter-<%= product.category %>">
-          <div class="product-card">
-            <div class="product-image">
-              <% if (product.sale) { %>
-                <span class="badge">Sale</span>
-              <% } %>
-              
-              <img src="<%= product.image %>" alt="<%= product.name %>" class="img-fluid main-img">
-              <%# Modifikasi untuk gambar hover %>
-                    <%
-                      let hoverImage = '';
-                      // Memastikan product.image ada sebelum memodifikasi
-                      if (product.image) {
-                        // Mengambil path tanpa ekstensi (misalnya '/assets/img/medium_roast_coffee_blend')
-                        const lastDotIndex = product.image.lastIndexOf('.');
-                        const pathWithoutExt = lastDotIndex !== -1 ? product.image.substring(0, lastDotIndex) : product.image;
-                        const ext = lastDotIndex !== -1 ? product.image.substring(lastDotIndex) : '';
+        <div class="row gy-4">
+            <% if (typeof products !== 'undefined' && products.length > 0) { %>
+                <% products.slice(0, 3).forEach(product => { %>
+                                    <div class="col-lg-4 col-md-6 product-item">
+                                        <div class="product-card">
+                                            <div class="product-image">
+                                                <% if (product.stock === 0) { %>
+                                                    <span class="badge bg-secondary">Sold Out</span>
+                                                <% } else if (product.sale_price) { %>
+                                                    <span class="badge bg-danger">Sale</span>
+                                                <% } %>
+                                                
+                                                <a href="/products/<%= product.product_id %>">
+                                                    <img src="<%= product.image || '/assets/img/default-product.png' %>" alt="<%= product.name %>" class="main-img" loading="lazy">
+                                                <%# Modifikasi untuk gambar hover %>
+                                                <%
+                                                let hoverImage = '';
+                                                // Memastikan product.image ada sebelum memodifikasi
+                                                if (product.image) {
+                                                    // Mengambil path tanpa ekstensi (misalnya '/assets/img/medium_roast_coffee_blend')
+                                                    const lastDotIndex = product.image.lastIndexOf('.');
+                                                    const pathWithoutExt = lastDotIndex !== -1 ? product.image.substring(0, lastDotIndex) : product.image;
+                                                    const ext = lastDotIndex !== -1 ? product.image.substring(lastDotIndex) : '';
 
-                        // Menggabungkan kembali dengan .2 dan ekstensi asli
-                        hoverImage = pathWithoutExt + '.2' + ext;
-                      }
-                    %>
-                    <% if (hoverImage) { %>
-                      <img src="<%= hoverImage %>" alt="<%= product.name %> Hover" class="hover-img" loading="lazy">
-                    <% } %>
-              <div class="product-overlay">
-                <button class="btn-cart" data-product-id="<%= product.product_id %>" data-product-name="<%= product.name %>" data-product-price="<%= product.price %>" data-product-image="<%= product.image %>">
-                  <i class="bi bi-cart-plus"></i> Add to Cart
-                </button>
-                <div class="product-actions">
-                  <a href="#" class="action-btn"><i class="bi bi-heart"></i></a>
-                  <a href="/products/<%= product.product_id %>" class="action-btn"><i class="bi bi-eye"></i></a>
-                  <a href="#" class="action-btn"><i class="bi bi-arrow-left-right"></i></a>
+                                                    // Menggabungkan kembali dengan .2 dan ekstensi asli
+                                                    hoverImage = pathWithoutExt + '.2' + ext;
+                                                }   
+                                                %>
+                                                <% if (hoverImage) { %>
+                                                <img src="<%= hoverImage %>" alt="<%= product.name %> Hover" class="hover-img" loading="lazy">
+                                                <% } %>
+                                                </a>
+
+                                                <div class="product-overlay">
+                                                    <button type="button" class="action-btn add-to-cart-btn" data-product-id="<%= product.product_id %>" title="Add to Cart" <% if (product.stock === 0) { %>disabled<% } %>>
+                                                        <i class="bi bi-cart-plus"></i>
+                                                    </button>
+                                                    <button class="action-btn" title="Add to Wishlist"><i class="bi bi-heart"></i></button>
+                                                    <a href="/products/<%= product.product_id %>" class="action-btn" title="View Details"><i class="bi bi-eye"></i></a>
+                                                </div>
+                                            </div>
+                                            <div class="product-info">
+                                                <h3 class="product-title">
+                                                    <a href="/products/<%= product.product_id %>"><%= product.name %></a>
+                                                </h3>
+                                                <div class="product-price">
+                                                    <span>Rp<%= new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(product.price) %></span>
+                                                </div>
+                                                <div class="product-rating-container">
+                                                    <%
+                                                        const avgRating = (Math.random() * 1.5 + 3.5).toFixed(1); 
+                                                        const reviewCount = product.reviewCount || Math.floor(Math.random() * 150);
+
+                                                        const fullStars = Math.floor(avgRating);
+                                                        const hasHalfStar = (avgRating % 1) >= 0.5;
+                                                        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+                                                    %>
+
+                                                    <div class="rating-stars">
+                                                        <%# Loop untuk bintang penuh %>
+                                                        <% for(let i = 0; i < fullStars; i++) { %>
+                                                            <i class="bi bi-star-fill"></i>
+                                                        <% } %>
+
+                                                        <%# Cek apakah ada setengah bintang %>
+                                                        <% if(hasHalfStar) { %>
+                                                            <i class="bi bi-star-half"></i>
+                                                        <% } %>
+
+                                                        <%# Loop untuk bintang kosong %>
+                                                        <% for(let i = 0; i < emptyStars; i++) { %>
+                                                            <i class="bi bi-star"></i>
+                                                        <% } %>
+                                                    </div>
+                                                    
+                                                    <span class="rating-number">(<%= reviewCount %>)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            <% } else { %>
+                                <div class="col-12 text-center py-5">
+                                    <p class="text-muted">Tidak ada produk yang dapat ditampilkan saat ini.</p>
+                                </div>
+                            <% } %>
+                        </div>
+                        </div>
                 </div>
-              </div>
             </div>
-            <div class="product-info">
-              <h5 class="product-title"><a href="/products/<%= product.product_id %>"><%= product.name %></a></h5>
-              <div class="product-price">
-                <% if (product.salePrice && product.salePrice < product.price) { %>
-                  <span class="current-price">$<%= product.salePrice%></span>
-                  <span class="old-price">$<%= product.price %></span>
-                <% } else { %>
-                  <span>$<%= product.price %></span>
-                <% } %>
-              </div>
-            </div>
-          </div>
-        </div>
-      <% }) %>
-    </div>
-  </div>
-</section>
+        </section>
+    </main>
+
 <!-- /Product List Section -->
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Event listener untuk semua tombol 'Add to Cart'
+            document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (this.hasAttribute('disabled')) return; // Jangan lakukan apa-apa jika tombol disabled
 
-<script>
-  // Add event listeners for the "Add to Cart" buttons
-  document.querySelectorAll('.btn-cart').forEach(button => {
-    button.addEventListener('click', function (event) {
-      const productId = this.getAttribute('data-product-id');
-      const quantity = 1;  // For simplicity, we're assuming 1 quantity for now
-
-      fetch('/carts/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ productId, quantity })
-      })
-      .then(response => response.json())
-      .then(data => {
-        alert(data.message || 'Item added to cart successfully!');
-      })
-      .catch(error => console.error('Error:', error));
-    });
-
-      // --- Add to Cart Functionality (menggunakan Toast) ---
-  document.querySelectorAll('.btn-cart').forEach(button => {
-    button.addEventListener('click', function (event) {
-      const productId = this.getAttribute('data-product-id');
-      const quantity = 1;
-
-      fetch('/carts/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ productId, quantity })
-      })
-      .then(response => {
-        if (!response.ok) {
-            // Throw error to be caught by the catch block
-            return response.json().then(errorData => {
-                throw new Error(errorData.error || errorData.message || 'Failed to add item to cart.');
+                    const productId = this.dataset.productId;
+                    
+                    // Gunakan JQuery AJAX agar konsisten dengan main.js
+                    $.ajax({
+                        url: '/api/carts', // Mengarah ke API endpoint untuk keranjang
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            productId: productId,
+                            quantity: 1
+                        }),
+                        success: function(response) {
+                            // Tampilkan notifikasi toast sukses
+                            Swal.fire({
+                                toast: true,
+                                position: 'top-end',
+                                icon: 'success',
+                                title: response.message || 'Produk ditambahkan!',
+                                showConfirmButton: false,
+                                timer: 2000,
+                                timerProgressBar: true,
+                            });
+                            
+                            // Update jumlah item di header jika ada fungsinya
+                            if (typeof window.updateCartItemCount === 'function') {
+                                window.updateCartItemCount();
+                            }
+                        },
+                        error: function(xhr) {
+                            // Cek jika error karena tidak terautentikasi (status 401 atau 403)
+                            if (xhr.status === 401 || xhr.status === 403) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Perlu Login',
+                                    text: 'Anda harus login untuk menambahkan produk ke keranjang.',
+                                    confirmButtonText: 'Login Sekarang'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        window.location.href = '/auth/login';
+                                    }
+                                });
+                            } else {
+                                // Tampilkan error umum
+                                const error = xhr.responseJSON || { message: 'Gagal menambahkan produk.' };
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Oops...',
+                                    text: error.message
+                                });
+                            }
+                        }
+                    });
+                });
             });
-        }
-        return response.json();
-      })
-      .then(data => {
-        window.showToast(data.message || 'Product added to cart successfully!', 'success');
-        // Opsional: perbarui badge keranjang di header
-        // if (window.updateCartItemCount) {
-        //     window.updateCartItemCount();
-        // }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        window.showToast(error.message || 'A network or server error occurred.', 'error');
-      });
-    });
-  });
-});
-</script>
+        });
+    </script>

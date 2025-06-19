@@ -27,7 +27,7 @@
               }
             </script>
             <div class="swiper-wrapper">
-              <div class="swiper-slide">🚚 Free shipping on orders over Rp250.000</div>
+              <div class="swiper-slide">🚚 Free shipping on orders over $30</div>
               <div class="swiper-slide">💰 30 days money back guarantee.</div>
               <div class="swiper-slide">🎁 20% off on your first order</div>
             </div>
@@ -83,7 +83,7 @@
           <button class="header-action-btn mobile-search-toggle d-xl-none" type="button" data-bs-toggle="collapse" data-bs-target="#mobileSearch" aria-expanded="false" aria-controls="mobileSearch">
             <i class="bi bi-search"></i>
           </button>
-          <a href="/users/account" class="header-action-btn d-none d-md-block">
+          <a href="/users/me" class="header-action-btn d-none d-md-block">
             <i class="bi bi-heart"></i>
             <span class="badge">0</span>
           </a>
@@ -112,7 +112,7 @@
                   <i class="bi bi-person-circle me-2"></i>
                   <span>My Profile</span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center" href="/orders/me">
+                <a class="dropdown-item d-flex align-items-center" href="/users/me#orders">
                   <i class="bi bi-bag-check me-2"></i>
                   <span>My Orders</span>
                 </a>
@@ -120,16 +120,16 @@
                   <i class="bi bi-geo-alt me-2"></i>
                   <span>My Address</span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center" href="/users/settings">
+                <a class="dropdown-item d-flex align-items-center" href="/users/me#settings">
                   <i class="bi bi-gear me-2"></i>
                   <span>Settings</span>
                 </a>
               </div>
               <div class="dropdown-footer">
                 <% if (user) { %>
-                  <button id="logout-button" class="btn btn-outline-primary w-100">Logout</button>
+                  <a href="/auth/logout" class="btn btn-outline-primary w-100">Logout</a>
                 <% } else { %>
-                  <a href="/auth/login" class="btn btn-primary w-100 mb-2">Sign In</a>
+                  <a href="/auth/login" class="btn btn-accent w-100 mb-2">Sign In</a>
                   <a href="/auth/register" class="btn btn-outline-primary w-100">Register</a>
                 <% } %>
               </div>
@@ -149,9 +149,11 @@
             <li><a href="/" class="active">Home</a></li>
             <li><a href="/products">Product</a></li>
             <li><a href="/carts">Cart</a></li>
-            <li><a href="/orders/me">My Orders</a></li>
+            <li><a href="/users/me#orders">My Orders</a></li>
             <li><a href="/about">About</a></li>
             <li><a href="/contact">Contact</a></li>
+            <li><a href="/faq">FAQ</a></li>
+            <li><a href="/terms">Terms of Service</a></li>
           </ul>
         </nav>
       </div>
@@ -161,29 +163,6 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    const logoutButton = document.getElementById('logout-button');
-    if (logoutButton) {
-      logoutButton.addEventListener('click', async () => {
-        try {
-          const response = await fetch('/auth/logout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          const data = await response.json();
-          if (response.ok) {
-            window.showAlert(data.message, 'success');
-            setTimeout(() => {
-              window.location.href = '/auth/login'; // Redirect ke halaman login setelah logout
-            }, 1500);
-          } else {
-            window.showAlert(data.message || 'Gagal logout.', 'error');
-          }
-        } catch (error) {
-          console.error('Logout error:', error);
-          window.showAlert('Terjadi kesalahan jaringan saat logout.', 'error');
-        }
-      });
-    }
 
     // Fungsi untuk memperbarui jumlah item di badge keranjang
     window.updateCartItemCount = async () => {
