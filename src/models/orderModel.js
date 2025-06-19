@@ -40,7 +40,6 @@ const Order = {
             if ([order_id, product_id, quantity, total_price].includes(undefined)) {
                 throw new Error('Attempted to insert an order item with undefined values.');
             }
-            console.log ();
 
             // Menggunakan variabel 'total_price' di query
             await conn.execute(
@@ -59,7 +58,7 @@ const Order = {
      * @returns {Promise<Object|null>} Objek pesanan lengkap jika ditemukan, null jika tidak.
      * @throws {Error} Jika terjadi kesalahan database.
      */
-    findById: async (orderId) => { // Mengganti getOrderById menjadi findById
+    findById: async (orderId) => {
         try {
             const [orders] = await db.execute(
                 `SELECT o.*,
@@ -228,7 +227,7 @@ const Order = {
             throw new Error('Database error: Failed to fetch orders by status');
         }
     },
-
+    
     /**
      * Mengecek apakah seorang pengguna telah membeli produk tertentu.
      * Digunakan untuk memvalidasi apakah pengguna berhak memberikan ulasan.

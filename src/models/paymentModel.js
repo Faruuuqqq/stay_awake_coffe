@@ -7,18 +7,10 @@ const db = require('../config/db');
  * @returns {string|null} Formatted datetime string or null if invalid Date.
  */
 const formatMysqlDatetime = (dateObj) => {
-    if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
-        return null; // Return null if not a valid Date object, so MySQL accepts NULL
+    if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+        return null; // Kembalikan null jika tanggal tidak valid
     }
-
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Month starts from 0
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    const hours = String(dateObj.getHours()).padStart(2, '0');
-    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-    const seconds = String(dateObj.getSeconds()).padStart(2, '0');
-
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    return dateObj.toISOString().slice(0, 19).replace('T', ' ');
 };
 
 // Objek Payment berisi semua fungsi interaksi database untuk pembayaran
@@ -29,16 +21,17 @@ const Payment = {
      * @returns {Promise<number>} The ID of the newly created payment.
      * @throws {Error} If a database error occurs.
      */
-    create: async ({ order_id, method, status, transaction_id, amount_paid, paid_at }) => {
+    create: async (paymentData, connection) => { // Terima 'connection'
+        const conn = connection || db; // Gunakan koneksi transaksi jika ada
         try {
-            const formatted_paid_at = formatMysqlDatetime(paid_at); // Use the helper function
+            const { orderId, method, status, transactionId, amountPaid, paidAt } = paymentData;
+            const formatted_paid_at = new Date(); // Biarkan MySQL menangani format
 
-            const [result] = await db.execute(
-                `INSERT INTO payments (order_id, method, status, transaction_id, amount_paid, paid_at)
-                VALUES (?, ?, ?, ?, ?, ?)`,
-                [order_id, method, status, transaction_id, amount_paid, formatted_paid_at]
+            const [result] = await conn.execute(
+                `INSERT INTO payments (order_id, method, status, transaction_id, amount_paid, paid_at) VALUES (?, ?, ?, ?, ?, ?)`,
+                [orderId, method, status, transactionId, amountPaid, formatted_paid_at]
             );
-            return result.insertId;
+            return { paymentId: result.insertId, ...paymentData };
         } catch (error) {
             console.error('Error creating payment in DB:', error.message);
             throw new Error('Database error: Failed to create payment');
@@ -51,7 +44,7 @@ const Payment = {
      * @returns {Promise<Object|null>} The payment object if found, null otherwise.
      * @throws {Error} If a database error occurs.
      */
-    findById: async (payment_id) => { // Renamed from getPaymentById
+    findById: async (payment_id) => {
         try {
             const [rows] = await db.execute(`SELECT * FROM payments WHERE payment_id = ?`, [payment_id]);
             return rows[0] || null;
@@ -67,7 +60,7 @@ const Payment = {
      * @returns {Promise<Object|null>} The payment object if found, null otherwise.
      * @throws {Error} If a database error occurs.
      */
-    findByOrderId: async (order_id) => { // Renamed from getPaymentByOrderId
+    findByOrderId: async (order_id) => {
         try {
             const [rows] = await db.execute(`SELECT * FROM payments WHERE order_id = ?`, [order_id]);
             return rows[0] || null;
@@ -106,9 +99,10 @@ const Payment = {
      * @returns {Promise<boolean>} True if the payment was updated, false otherwise.
      * @throws {Error} If a database error occurs.
      */
-    updateStatus: async (payment_id, status) => {
+    updateStatus: async (payment_id, status, connection) => {
+        const conn = connection || db;
         try {
-            const [result] = await db.execute(
+            const [result] = await conn.execute(
                 `UPDATE payments SET status = ? WHERE payment_id = ?`,
                 [status, payment_id]
             );

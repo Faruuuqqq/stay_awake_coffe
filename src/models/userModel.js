@@ -1,6 +1,4 @@
-// src/models/userModel.js
 const db = require('../config/db');
-const argon2 = require('argon2'); // Argon2 sudah digunakan, sangat bagus untuk hashing password
 
 // Objek User berisi semua fungsi interaksi database untuk pengguna
 const User = {
@@ -12,7 +10,6 @@ const User = {
      */
     findById: async (id) => {
         try {
-            // FIX: Menghapus phone_number dan address karena tidak ada di tabel users
             const [rows] = await db.execute('SELECT user_id, name, email, role FROM users WHERE user_id = ?', [id]);
             return rows[0] || null;
         } catch (error) {
@@ -68,13 +65,19 @@ const User = {
      * @returns {Promise<boolean>} True jika pengguna berhasil diperbarui, false jika tidak ditemukan.
      * @throws {Error} Jika terjadi kesalahan database.
      */
-    updateProfile: async (id, { username, email }) => { // FIX: Menghapus phone_number dan address dari parameter update
+    update: async (id, updateData) => {
         try {
-            // FIX: Menghapus phone_number dan address dari query UPDATE karena tidak ada di tabel users
-            // Asumsi hanya username dan email yang diupdate di tabel users
+            // Ambil nama dan email dari objek updateData
+            const { name, email } = updateData;
+
+            // Pastikan kita tidak mengirim undefined ke database
+            if (name === undefined || email === undefined) {
+                throw new Error("Name and email are required for update.");
+            }
+
             const [result] = await db.execute(
                 'UPDATE users SET name = ?, email = ? WHERE user_id = ?',
-                [username, email, id]
+                [name, email, id]
             );
             return result.affectedRows > 0;
         } catch (error) {
@@ -91,17 +94,16 @@ const User = {
      * @returns {Promise<boolean>} True jika password berhasil diperbarui, false jika tidak ditemukan.
      * @throws {Error} Jika terjadi kesalahan database.
      */
-    updatePassword: async (id, hashedPassword) => {
+    updatePassword: async (id, newPasswordHash) => {
         try {
-            // Menggunakan 'password' sesuai skema
             const [result] = await db.execute(
                 'UPDATE users SET password = ? WHERE user_id = ?',
-                [hashedPassword, id]
+                [newPasswordHash, id]
             );
             return result.affectedRows > 0;
         } catch (error) {
             console.error(`Error updating user password ID ${id} in DB:`, error.message);
-            throw new Error('Database error: Failed to update user password');
+            throw new Error('Database error: Failed to update password');
         }
     },
 

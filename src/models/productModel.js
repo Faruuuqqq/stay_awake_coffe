@@ -283,7 +283,27 @@ const Product = {
             console.error('Error fetching user by ID from DB (via productModel):', error.message);
             throw error;
         }
-    }
+    },
+
+    decreaseStock: async (productId, quantity, connection) => {
+        // Gunakan koneksi dari service untuk memastikan bagian dari transaksi
+        const conn = connection || db; 
+        try {
+            const [result] = await conn.execute(
+                'UPDATE products SET stock = stock - ? WHERE product_id = ? AND stock >= ?',
+                [quantity, productId, quantity]
+            );
+
+            if (result.affectedRows === 0) {
+                throw new Error(`Stok tidak mencukupi untuk produk ID ${productId}.`);
+            }
+            return true;
+
+        } catch (error) {
+            console.error(`Error decreasing stock for product ID ${productId}:`, error.message);
+            throw error; 
+        }
+    },
 };
 
 module.exports = Product;
