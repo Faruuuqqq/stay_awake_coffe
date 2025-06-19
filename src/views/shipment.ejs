@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="description" content="Lacak status pengiriman pesanan Anda dari Stay Awake Coffee. Lihat pembaruan real-time dan detail kurir.">
+    <meta name="keywords" content="lacak pengiriman, status pengiriman, ekspedisi, kurir, pesanan">
+
+    <!-- Favicons -->
+    <link href="/assets/img/favicon.png" rel="icon">
+    <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,800;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    
+    <!-- Vendor CSS Files -->
+    <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="/assets/vendor/aos/aos.css" rel="stylesheet">
+    <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+    <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+    <link href="/assets/vendor/drift-zoom/drift-basic.min.css" rel="stylesheet">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.2/dist/sweetalert2.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <!-- Template Main CSS File -->
+    <link href="/assets/css/main.css" rel="stylesheet">
+    
+    <style>
+        /* Styling khusus untuk halaman pengiriman */
+        .tracking-card {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .tracking-status-badge {
+            font-size: 1.1em;
+            padding: 8px 15px;
+            border-radius: 50px;
+            text-transform: capitalize;
+        }
+        .timeline {
+            position: relative;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .timeline:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #eee;
+            left: 20px;
+            margin-left: -1px;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            padding-left: 50px;
+        }
+        .timeline-item:before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            left: 16px;
+            top: 5px;
+            border: 2px solid #fff;
+            z-index: 1;
+        }
+        .timeline-item.active:before {
+            background-color: var(--primary-color); /* Warna untuk status aktif */
+        }
+        .timeline-item h5 {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--heading-color);
+        }
+        .timeline-item p {
+            font-size: 0.9em;
+            color: var(--default-color);
+        }
+        .timeline-item .date {
+            font-size: 0.8em;
+            color: #999;
+        }
+        .loading-spinner-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+</head>
+<body class="shipment-page">
+    <!-- Header -->
+    <%- include('./partials/header.ejs', { user: user, cartItemCount: cartItemCount }) %>
+
+    <main id="main">
+        <div class="page-title light-background">
+            <div class="container d-lg-flex justify-content-between align-items-center">
+                <h1 class="mb-2 mb-lg-0">Track Shipment</h1>
+                <nav class="breadcrumbs">
+                    <ol>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/orders/me">My Orders</a></li>
+                        <li class="current">Track Shipment</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <section id="shipment-tracking" class="shipment-tracking section">
+            <div class="container" data-aos="fade-up">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="tracking-card">
+                            <h4 class="pb-3 mb-4 border-bottom">Shipment Details for Order #<%= orderId %></h4>
+                            <div id="shipment-details-container">
+                                <div class="loading-spinner-container">
+                                    <div class="spinner-border text-primary loading-spinner" role="status">
+                                        <span class="visually-hidden">Memuat pengiriman...</span>
+                                    </div>
+                                    <p class="text-center text-muted">Memuat detail pengiriman...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <%- include('./partials/footer.ejs') %>
+
+    <!-- Vendor JS Files -->
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/vendor/aos/aos.js"></script>
+    <script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
+    <script src="/assets/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+    <script src="/assets/vendor/php-email-form/validate.js"></script>
+    <script src="/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js"></script>
+    <script src="/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+    <script src="/assets/vendor/drift-zoom/Drift.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="/assets/js/main.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const shipmentDetailsContainer = document.getElementById('shipment-details-container');
+  
+
+            async function fetchAndRenderShipmentDetails() {
+                shipmentDetailsContainer.innerHTML = `
+                    <div class="loading-spinner-container">
+                        <div class="spinner-border text-primary loading-spinner" role="status">
+                            <span class="visually-hidden">Memuat pengiriman...</span>
+                        </div>
+                        <p class="text-center text-muted">Memuat detail pengiriman...</p>
+                    </div>
+                `;
+                try {
+                    const token = localStorage.getItem('jwtToken');
+                    if (!token) {
+                        window.showAlert('Anda perlu login untuk melihat detail pengiriman.', 'warning');
+                        setTimeout(() => { window.location.href = '/auth/login'; }, 1500);
+                        return;
+                    }
+
+                    const response = await fetch(`/api/shipments/order/${orderId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Gagal memuat detail pengiriman.');
+                    }
+                    const result = await response.json();
+                    const shipment = result.data; // Asumsi result.data langsung berisi objek shipment
+
+                    if (shipment) {
+                        const shipmentHtml = `
+                            <div class="mb-4">
+                                <h5>Current Status: <span class="badge tracking-status-badge bg-info <%= shipment.status %>"><%= shipment.status %></span></h5>
+                                <p><strong>Courier:</strong> <%= shipment.courier %></p>
+                                <% if (shipment.shipped_at) { %>
+                                    <p><strong>Shipped At:</strong> <%= new Date(shipment.shipped_at).toLocaleString('id-ID') %></p>
+                                <% } %>
+                                <% if (shipment.delivered_at) { %>
+                                    <p><strong>Delivered At:</strong> <%= new Date(shipment.delivered_at).toLocaleString('id-ID') %></p>
+                                <% } %>
+                            </div>
+                            <!-- Timeline events (contoh sederhana, bisa lebih kompleks jika ada data history status) -->
+                            <h5>Tracking History:</h5>
+                            <ul class="timeline">
+                                <li class="timeline-item active">
+                                    <h5><%= shipment.status %></h5>
+                                    <p>Your order is currently <%= shipment.status %> with <%= shipment.courier %>.</p>
+                                    <span class="date"><%= new Date(shipment.updated_at).toLocaleString('id-ID') %></span>
+                                </li>
+                                <% if (shipment.delivered_at && shipment.status === 'delivered') { %>
+                                    <li class="timeline-item">
+                                        <h5>Delivered</h5>
+                                        <p>Your order has been delivered.</p>
+                                        <span class="date"><%= new Date(shipment.delivered_at).toLocaleString('id-ID') %></span>
+                                    </li>
+                                <% } %>
+                                <% if (shipment.shipped_at && (shipment.status === 'shipped' || shipment.status === 'in_transit' || shipment.status === 'delivered')) { %>
+                                    <li class="timeline-item">
+                                        <h5>Shipped</h5>
+                                        <p>Your order has been shipped by <%= shipment.courier %>.</p>
+                                        <span class="date"><%= new Date(shipment.shipped_at).toLocaleString('id-ID') %></span>
+                                    </li>
+                                <% } %>
+                                <li class="timeline-item">
+                                    <h5>Order Placed</h5>
+                                    <p>Your order was successfully placed.</p>
+                                    <span class="date"><%= new Date(shipment.created_at || new Date()).toLocaleString('id-ID') %></span> <%# Asumsi created_at dari order %>
+                                </li>
+                            </ul>
+                        `;
+                        shipmentDetailsContainer.innerHTML = shipmentHtml;
+                    } else {
+                        shipmentDetailsContainer.innerHTML = '<p class="text-center text-muted py-5">Detail pengiriman tidak ditemukan untuk pesanan ini.</p>';
+                    }
+                } catch (error) {
+                    console.error('Error fetching shipment details:', error);
+                    shipmentDetailsContainer.innerHTML = `
+                        <p class="text-center text-danger py-5">Gagal memuat detail pengiriman: ${error.message}</p>
+                    `;
+                    if (typeof window.showAlert === 'function') {
+                        window.showAlert(`Gagal memuat detail pengiriman: ${error.message}`, 'error');
+                    } else {
+                        console.error("window.showAlert is not defined. Falling back to alert.");
+                        alert(`Gagal memuat detail pengiriman: ${error.message}`);
+                    }
+                }
+            }
+
+            // Panggil fetchAndRenderShipmentDetails saat DOM dimuat
+            fetchAndRenderShipmentDetails();
+
+            // Panggil updateCartItemCount saat DOM fully loaded
+            if (typeof window.updateCartItemCount === 'function') {
+                window.updateCartItemCount();
+            }
+        });
+    </script>
+</body>
+</html>
