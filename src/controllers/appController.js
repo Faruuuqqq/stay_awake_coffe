@@ -76,22 +76,6 @@ const appController = {
     },
 
     /**
-     * Merender halaman Blog.
-     * @param {Object} req - Objek request Express.
-     * @param {Object} res - Objek response Express.
-     * @param {Function} next - Fungsi middleware selanjutnya.
-     */
-    getBlogPage: async (req, res, next) => {
-        try {
-            const commonData = await getCommonRenderData(req.userId, { title: 'Stay Awake Coffee - Blog' });
-            res.render('blog', { ...commonData });
-        } catch (error) {
-            console.error("Error rendering blog page:", error.message);
-            next(error);
-        }
-    },
-
-    /**
      * Merender halaman Error (404).
      * @param {Object} req - Objek request Express.
      * @param {Object} res - Objek response Express.

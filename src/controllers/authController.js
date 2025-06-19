@@ -89,6 +89,19 @@ const authController = {
             next(error);
         }
     },
+
+    /**
+     * Menampilkan halaman forgot password.
+     */
+    getForgotPasswordPage: async (req, res, next) => {
+        try {
+            const commonData = await getCommonRenderData(req.userId, { title: 'Forgot Password' });
+            res.render('forgot-password', { ...commonData, page: 'Forgot Password' });
+        } catch (error) {
+            console.error('Error rendering register page:', error.message);
+            next(error);
+        }
+    },
 };
 
 module.exports = authController;

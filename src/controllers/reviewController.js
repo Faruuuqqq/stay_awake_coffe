@@ -1,6 +1,4 @@
-// src/controllers/reviewController.js
 const reviewService = require('../services/reviewService');
-const { getCommonRenderData } = require('../utils/renderHelpers'); // Untuk data render umum
 
 const reviewController = {
     /**
@@ -14,7 +12,7 @@ const reviewController = {
             if (!req.userId) {
                 return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
             }
-            const reviewData = req.body; // { productId, rating, comment }
+            const reviewData = req.body;
             const result = await reviewService.createReview(req.userId, reviewData);
             res.status(201).json(result); // Status 201 Created
         } catch (error) {
@@ -49,8 +47,8 @@ const reviewController = {
      * @param {Function} next - Fungsi middleware selanjutnya.
      */
     updateReview: async (req, res, next) => {
-        const { id } = req.params; // reviewId
-        const updateData = req.body; // { rating, comment }
+        const { id } = req.params;
+        const updateData = req.body;
         try {
             if (!req.userId) {
                 return next(new ApiError(401, 'Unauthorized: User ID not found in request.'));
@@ -70,9 +68,9 @@ const reviewController = {
      * @param {Function} next - Fungsi middleware selanjutnya.
      */
     deleteReview: async (req, res, next) => {
-        const { id } = req.params; // reviewId
+        const { id } = req.params;
         try {
-            if (!req.userId || !req.user || !req.user.role) { // Pastikan user dan role ada
+            if (!req.userId || !req.user || !req.user.role) {
                 return next(new ApiError(401, 'Unauthorized: User ID or role not found in request.'));
             }
             const result = await reviewService.deleteReview(id, req.userId, req.user.role);

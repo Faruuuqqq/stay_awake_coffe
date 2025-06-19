@@ -12,13 +12,10 @@ const categoryController = {
     getAllCategories: async (req, res, next) => {
         try {
             const result = await categoryService.getAllCategories();
-            // Anda bisa memilih untuk merender halaman atau mengembalikan JSON
-            // Jika ini adalah endpoint API:
-            res.status(200).json(result);
+            // res.status(200).json(result);
 
-            // Jika ini untuk merender halaman kategori:
-            // const commonData = await getCommonRenderData(req.userId, { title: 'Manage Categories' });
-            // res.render('admin/categories', { ...commonData, categories: result.data });
+            const commonData = await getCommonRenderData(req.userId, { title: 'Manage Categories' });
+            res.render('category', { ...commonData, categories: result.data });
 
         } catch (error) {
             console.error('Error in categoryController.getAllCategories:', error.message);

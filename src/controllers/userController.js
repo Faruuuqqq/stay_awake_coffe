@@ -1,8 +1,6 @@
-// src/controllers/userController.js
 const userService = require('../services/userService');
-const { getCommonRenderData } = require('../utils/renderHelpers'); // Untuk data render umum
-const userModel = require('../models/userModel'); // Untuk mengambil data user jika diperlukan di render
-const { ApiError } = require('../utils/ApiError'); // Pastikan ini diimpor
+const { getCommonRenderData } = require('../utils/renderHelpers');
+const { ApiError } = require('../utils/ApiError');
 
 const userController = {
     /**
@@ -35,11 +33,16 @@ const userController = {
             }
             const result = await userService.getUserProfile(req.userId);
             // Anda bisa memilih untuk merender halaman profil atau mengembalikan JSON
-            res.status(200).json(result);
+            // res.status(200).json(result);
 
             // Contoh render halaman:
-            // const commonData = await getCommonRenderData(req.userId, { title: 'My Profile' });
-            // res.render('user-profile', { ...commonData, user: result.data });
+            const commonData = await getCommonRenderData(req.userId, { title: 'My Profile' });
+            res.render('account', { 
+                ...commonData,
+                user: result.data,
+                addresses: result.addresses,
+                orders: result.orders
+            });
         } catch (error) {
             console.error('Error in userController.getMyProfile:', error.message);
             next(error);

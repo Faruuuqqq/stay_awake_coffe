@@ -34,12 +34,14 @@ const productController = {
     getProductById: async (req, res, next) => {
         const { id } = req.params;
         try {
+            const productList = await productService.getAllProductsForPage({}, req.userId);
             const serviceResult = await productService.getProductDetail(id);
             const commonData = await getCommonRenderData(req.userId, { title: serviceResult.product.name });
 
             res.render('product-detail', {
                 ...commonData,
                 product: serviceResult.product,
+                products: productList.products,
                 categories: serviceResult.categories,
             });
         } catch (error) {

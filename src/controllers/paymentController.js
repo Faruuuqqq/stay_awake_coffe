@@ -1,5 +1,6 @@
 // src/controllers/paymentController.js
 const paymentService = require('../services/paymentService');
+const orderService = require('../services/orderService');
 const { getCommonRenderData } = require('../utils/renderHelpers'); // Untuk data render umum
 
 const paymentController = {
@@ -12,11 +13,11 @@ const paymentController = {
      */
     createPayment: async (req, res, next) => {
         try {
-            const paymentData = req.body; // { orderId, method, status, transactionId, amountPaid, paidAt }
-            const result = await paymentService.createPayment(paymentData);
-            res.status(201).json(result); // Status 201 Created
+            const userId = req.userId;
+            const paymentData = req.body;
+            const result = await paymentService.createPayment(userId, paymentData);
+            res.status(201).json(result);
         } catch (error) {
-            console.error('Error in paymentController.createPayment:', error.message);
             next(error);
         }
     },
@@ -94,7 +95,32 @@ const paymentController = {
             console.error('Error in paymentController.updatePaymentStatus:', error.message);
             next(error);
         }
-    }
+    },
+
+    getPaymentPage: async (req, res, next) => {
+        try {
+            const { orderId } = req.query;
+            const userId = req.userId;
+
+            if (!orderId) {
+                return res.redirect('/users/me#orders'); // Redirect jika tidak ada orderId
+            }
+
+            // Ambil detail pesanan untuk memastikan pesanan ini milik user yang login
+            const orderResult = await orderService.getOrderDetail(orderId, userId);
+            
+            const commonData = await getCommonRenderData(userId, { title: `Pembayaran Pesanan #${orderId}` });
+            
+            res.render('payment', {
+                ...commonData,
+                order: orderResult.data // Kirim data pesanan ke halaman payment.ejs
+            });
+
+        } catch (error) {
+            console.error('Error getting payment page:', error.message);
+            next(error);
+        }
+    },
 };
 
 module.exports = paymentController;

@@ -7,36 +7,28 @@ const { ApiError } = require('../utils/ApiError');
 
 const orderController = {
     /**
-     * FUNGSI BARU: Menampilkan halaman checkout.
      * Mengambil data keranjang dan alamat sebelum merender halaman.
      */
     getCheckoutPage: async (req, res, next) => {
         try {
             const userId = req.userId;
-            if (!userId) {
-                // Sebenarnya middleware 'protect' sudah menangani ini, tapi ini sebagai pengaman tambahan.
-                return res.redirect('/auth/login');
-            }
+            if (!userId) return res.redirect('/auth/login');
 
-            // 1. Ambil data dari berbagai service
             const cartResult = await cartService.getCartItems(userId);
             const addressResult = await addressService.getAddressesByUserId(userId);
             const commonData = await getCommonRenderData(userId, { title: 'Checkout' });
 
             const items = cartResult.data ? cartResult.data.items : [];
-
-            // 2. Jika keranjang kosong, redirect kembali ke halaman keranjang
             if (!items || items.length === 0) {
                 return res.redirect('/carts?error=Keranjang Anda kosong, tidak bisa melanjutkan ke checkout.');
             }
 
-            // 3. Render halaman checkout dengan semua data yang diperlukan
             res.render('checkout', {
                 ...commonData,
                 items: items,
-                totalPrice: cartResult.data.totalPrice,
+                totalPrice: cartResult.data.subtotal,
                 addresses: addressResult.data,
-                error: req.query.error || null, // Untuk menampilkan pesan error jika ada
+                error: req.query.error || null,
                 success: req.query.success || null
             });
 
@@ -70,15 +62,13 @@ const orderController = {
 
             const result = await orderService.createOrderFromCart(userId, { addressId: finalAddressId });
             
-            // PERUBAHAN UTAMA: Kirim JSON, bukan redirect
             res.status(201).json({
                 status: 'success',
                 message: 'Pesanan berhasil dibuat!',
-                redirectUrl: `/orders/${result.data.orderId}?success=true` // Kirim URL tujuan
+                redirectUrl: `/orders/${result.data.orderId}?success=true`
             });
 
         } catch (error) {
-            // Teruskan error agar bisa ditangkap oleh AJAX di frontend
             console.error('Error in orderController.createOrder:', error.message);
             next(error);
         }

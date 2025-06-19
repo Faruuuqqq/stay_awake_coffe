@@ -49,7 +49,7 @@ const cartController = {
     updateCartItemQuantity: async (req, res, next) => {
         try {
             const { productId, quantity } = req.body;
-            const result = await cartService.updateCartItem(req.userId, { productId, quantity });
+            const result = await cartService.updateCartItemQuantity(req.userId, productId, quantity );
             res.status(200).json(result);
         } catch (error) {
             console.error('Error in cartController.updateCartItemQuantity:', error.message);
