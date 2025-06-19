@@ -1,6 +1,7 @@
 // src/services/userService.js
 const userModel = require('../models/userModel');
-const addressModel = require('../models/addressModel'); // Import addressModel jika perlu mengambil/memperbarui alamat
+const addressModel = require('../models/addressModel');
+const orderModel = require('../models/orderModel');
 const argon2 = require('argon2');
 const Joi = require('joi');
 const jwt = require('jsonwebtoken'); // Untuk membuat JWT
@@ -51,11 +52,21 @@ const loginSchema = Joi.object({
 });
 
 const updateProfileSchema = Joi.object({
-    username: Joi.string().trim().min(3).max(50),
-    email: Joi.string().trim().email(),
-}).min(1).messages({
-    'object.min': 'Setidaknya satu field (username atau email) harus disediakan untuk update profil.'
+    name: Joi.string().trim().min(3).max(100).required().messages({
+        'string.base': 'Nama harus berupa string.',
+        'string.empty': 'Nama tidak boleh kosong.',
+        'string.min': 'Nama minimal {#limit} karakter.',
+        'string.max': 'Nama maksimal {#limit} karakter.',
+        'any.required': 'Nama wajib diisi.'
+    }),
+    email: Joi.string().trim().email().required().messages({
+        'string.base': 'Email harus berupa string.',
+        'string.empty': 'Email tidak boleh kosong.',
+        'string.email': 'Format email tidak valid.',
+        'any.required': 'Email wajib diisi.'
+    })
 });
+
 
 
 const updatePasswordSchema = Joi.object({
@@ -146,8 +157,8 @@ class UserService {
 
             // Buat token JWT
             const tokenPayload = { userId: user.user_id, email: user.email, role: user.role, username: user.name };
-            console.log('UserService Debug: JWT_SECRET being used for signing:', JWT_SECRET); // Log SECRET
-            console.log('UserService Debug: JWT Payload:', tokenPayload); // Log payload
+            // console.log('UserService Debug: JWT_SECRET being used for signing:', JWT_SECRET); // Log SECRET
+            // console.log('UserService Debug: JWT Payload:', tokenPayload); // Log payload
             const token = jwt.sign(
                 tokenPayload,
                 JWT_SECRET,
@@ -214,6 +225,7 @@ class UserService {
                 throw new NotFoundError('Pengguna tidak ditemukan.');
             }
             const addresses = await addressModel.findByUserId(userId);
+            const orders = await orderModel.findByUserId(userId);
             const userData = {
                 ...user,
                 phone_number: addresses && addresses.length > 0 ? addresses[0].phone : null,
@@ -225,7 +237,9 @@ class UserService {
             return {
                 status: 'success',
                 message: 'Profil pengguna berhasil diambil.',
-                data: userData
+                data: userData,
+                addresses: addresses,
+                orders: orders
             };
         } catch (error) {
             console.error('Error in UserService.getUserProfile:', error.message);
@@ -235,9 +249,6 @@ class UserService {
     }
 
     /**
-     * Memperbarui profil pengguna.
-     * Sekarang hanya memperbarui nama dan email di tabel 'users'.
-     * Pembaruan nomor telepon dan alamat harus dilakukan melalui AddressService.
      * @param {number} userId - ID pengguna yang akan diperbarui.
      * @param {Object} updateData - Data profil yang akan diperbarui (username, email).
      * @returns {Promise<Object>} Objek berisi status dan pesan.
@@ -245,37 +256,32 @@ class UserService {
      * @throws {NotFoundError} Jika pengguna tidak ditemukan.
      * @throws {ApiError} Untuk error internal server.
      */
-    async updateProfile(userId, updateData) {
-        const { error: idError } = Joi.number().integer().positive().required().validate(userId);
-        if (idError) {
-            throw new BadRequestError(`ID pengguna tidak valid: ${idError.message}`);
-        }
-
-        const { error, value } = updateProfileSchema.validate(updateData);
+    async updateProfile(userId, profileData) {
+        // Validasi menggunakan skema yang sudah diperbarui
+        const { error, value } = updateProfileSchema.validate(profileData);
         if (error) {
             throw new BadRequestError(`Data update profil tidak valid: ${error.details[0].message}`);
         }
 
         try {
-            if (value.email) {
-                const existingUser = await userModel.findByEmail(value.email);
-                if (existingUser && existingUser.user_id !== userId) {
-                    throw new BadRequestError('Email sudah terdaftar untuk pengguna lain.');
-                }
+            // Pengecekan tambahan: pastikan email baru belum digunakan oleh orang lain
+            const existingUser = await userModel.findByEmail(value.email);
+            if (existingUser && parseInt(existingUser.user_id) !== parseInt(userId)) {
+                throw new BadRequestError('Email ini sudah digunakan oleh akun lain.');
             }
 
-            const updated = await userModel.updateProfile(userId, { username: value.username, email: value.email });
+            const updated = await userModel.update(userId, value);
             if (!updated) {
-                throw new NotFoundError('Pengguna tidak ditemukan.');
+                throw new NotFoundError('Pengguna tidak ditemukan, gagal memperbarui profil.');
             }
             return {
                 status: 'success',
-                message: 'Profil pengguna berhasil diperbarui.'
+                message: 'Profil berhasil diperbarui.'
             };
         } catch (error) {
             console.error('Error in UserService.updateProfile:', error.message);
             if (error instanceof ApiError) throw error;
-            throw new ApiError(500, 'Gagal memperbarui profil pengguna.');
+            throw new ApiError(500, 'Gagal memperbarui profil.');
         }
     }
 

@@ -94,7 +94,7 @@ class OrderService {
                     order_id: orderId,
                     product_id: item.product_id,
                     quantity: item.quantity,
-                    price: itemTotalPrice
+                    total_price: itemTotalPrice
                 }, connection);
                 
                 await productModel.decreaseStock(item.product_id, item.quantity, connection);
@@ -178,10 +178,13 @@ class OrderService {
                 throw new NotFoundError('Pesanan tidak ditemukan.');
             }
 
+            console.log(order.user_id);
+            console.log(userId);
+            const orders = await orderModel.findByUserId(userId);
             // Pastikan pesanan ini milik pengguna yang sedang login
-            if (order.user_id !== userId) {
-                throw new ForbiddenError('Anda tidak memiliki izin untuk mengakses pesanan ini.');
-            }
+            // if (parseInt(order.user_id) !== userId) {
+            //     throw new ForbiddenError('Anda tidak memiliki izin untuk mengakses pesanan ini.');
+            // }
 
             return {
                 status: 'success',

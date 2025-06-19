@@ -4,7 +4,7 @@ class ApiError extends Error {
     constructor(statusCode, message, isOperational = true, stack = '') {
         super(message);
         this.statusCode = statusCode;
-        this.isOperational = isOperational; // Untuk membedakan error yang bisa diprediksi vs. error tak terduga
+        this.isOperational = isOperational;
         if (stack) {
             this.stack = stack;
         } else {
@@ -37,7 +37,6 @@ class ForbiddenError extends ApiError {
         super(403, message, true, stack);
     }
 }
-
 
 module.exports = {
     ApiError,

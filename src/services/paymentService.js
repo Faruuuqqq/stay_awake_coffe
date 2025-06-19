@@ -1,43 +1,16 @@
 // src/services/paymentService.js
 const paymentModel = require('../models/paymentModel');
 const orderModel = require('../models/orderModel'); // Diperlukan untuk memperbarui status order
+const db = require('../config/db');
 const Joi = require('joi');
 const { ApiError, BadRequestError, NotFoundError, ForbiddenError } = require('../utils/ApiError');
 
-// Skema Validasi Joi
 const createPaymentSchema = Joi.object({
-    orderId: Joi.number().integer().positive().required().messages({
-        'number.base': 'Order ID harus berupa angka.',
-        'number.integer': 'Order ID harus berupa integer.',
-        'number.positive': 'Order ID harus angka positif.',
-        'any.required': 'Order ID wajib diisi.'
-    }),
-    method: Joi.string().trim().min(2).max(50).required().messages({
-        'string.base': 'Metode pembayaran harus berupa string.',
-        'string.empty': 'Metode pembayaran tidak boleh kosong.',
-        'string.min': 'Metode pembayaran minimal {#limit} karakter.',
-        'string.max': 'Metode pembayaran maksimal {#limit} karakter.',
-        'any.required': 'Metode pembayaran wajib diisi.'
-    }),
-    // Status awal biasanya akan 'pending' atau 'created' dari gateway
-    status: Joi.string().valid('pending', 'completed', 'failed', 'refunded').default('pending').messages({
-        'string.base': 'Status pembayaran harus berupa string.',
-        'any.only': 'Status pembayaran tidak valid.'
-    }),
-    transactionId: Joi.string().trim().max(255).allow('').messages({ // Opsional, bisa dari gateway
-        'string.base': 'Transaction ID harus berupa string.',
-        'string.max': 'Transaction ID maksimal {#limit} karakter.'
-    }),
-    amountPaid: Joi.number().positive().precision(2).required().messages({
-        'number.base': 'Jumlah dibayar harus berupa angka.',
-        'number.positive': 'Jumlah dibayar harus angka positif.',
-        'number.precision': 'Jumlah dibayar maksimal 2 angka di belakang koma.',
-        'any.required': 'Jumlah dibayar wajib diisi.'
-    }),
-    paidAt: Joi.date().iso().default(() => new Date()).messages({ // Tanggal ISO string atau objek Date
-        'date.base': 'Paid at harus berupa tanggal yang valid.',
-        'date.iso': 'Paid at harus dalam format ISO 8601.'
-    })
+    orderId: Joi.number().required(),
+    method: Joi.string().required(),
+    status: Joi.string().required(),
+    amountPaid: Joi.number().required(),
+    transactionId: Joi.string().allow('', null)
 });
 
 const updatePaymentStatusSchema = Joi.object({
@@ -50,58 +23,49 @@ const updatePaymentStatusSchema = Joi.object({
 
 class PaymentService {
     /**
-     * Mencatat pembayaran baru untuk pesanan.
-     * Akan memperbarui status pesanan jika pembayaran berhasil.
-     * @param {Object} paymentData - Data pembayaran.
-     * @returns {Promise<Object>} Objek berisi status, pesan, dan ID pembayaran.
-     * @throws {BadRequestError} Jika data tidak valid atau order tidak ditemukan/sudah dibayar.
-     * @throws {ApiError} Untuk error internal server.
+     * Membuat (mencatat) pembayaran baru untuk sebuah pesanan.
+     * @param {number} userId - ID pengguna yang melakukan pembayaran (untuk validasi).
+     * @param {Object} paymentData - Data pembayaran dari frontend.
      */
-    async createPayment(paymentData) {
+    async createPayment(userId, paymentData) {
         const { error, value } = createPaymentSchema.validate(paymentData);
-        if (error) {
-            throw new BadRequestError(`Data pembayaran tidak valid: ${error.details[0].message}`);
-        }
+        if (error) throw new BadRequestError(`Data pembayaran tidak valid: ${error.details[0].message}`);
 
         let connection;
         try {
-            connection = await db.getConnection(); // Untuk transaksi
+            connection = await db.getConnection();
             await connection.beginTransaction();
 
-            const order = await orderModel.findById(value.orderId);
-            if (!order) {
-                throw new NotFoundError('Pesanan tidak ditemukan.');
+            const order = await orderModel.findById(value.orderId, connection);
+            if (!order) throw new NotFoundError('Pesanan tidak ditemukan.');
+            
+            // TODO: Aktifkan kembali pengecekan keamanan ini setelah fungsionalitas utama berjalan
+            // Pengecekan ini dinonaktifkan sementara sesuai permintaan Anda.
+            /*
+            if (parseInt(order.user_id) !== parseInt(userId)) {
+                throw new ForbiddenError('Anda tidak diizinkan membayar pesanan ini.');
             }
-            if (order.status === 'completed' || order.status === 'delivered') {
-                throw new BadRequestError('Pesanan ini sudah selesai atau telah dikirim, tidak dapat menerima pembayaran baru.');
-            }
-            if (order.total_price !== value.amountPaid) {
-                 throw new BadRequestError('Jumlah pembayaran tidak sesuai dengan total harga pesanan.');
+            */
+
+            if (parseFloat(order.total_price) !== parseFloat(value.amountPaid)) {
+                throw new BadRequestError('Jumlah pembayaran tidak sesuai dengan total tagihan.');
             }
 
-            const newPaymentId = await paymentModel.create(value);
-
-            // Perbarui status pesanan jika pembayaran berhasil (misal: 'completed')
-            if (value.status === 'completed') {
-                await orderModel.updateStatus(value.orderId, 'processing'); // Ubah status order menjadi processing
-            }
-
+            const newPayment = await paymentModel.create(value, connection);
+            await orderModel.updateStatus(value.orderId, 'processing', connection);
+            
             await connection.commit();
-            return {
-                status: 'success',
-                message: 'Pembayaran berhasil dicatat.',
-                paymentId: newPaymentId
-            };
+            return { status: 'success', message: 'Pembayaran berhasil dicatat.', data: newPayment };
         } catch (error) {
             if (connection) await connection.rollback();
-            console.error('Error in PaymentService.createPayment (transaction rolled back):', error.message);
+            console.error('Error in PaymentService.createPayment:', error.message);
             if (error instanceof ApiError) throw error;
             throw new ApiError(500, 'Gagal mencatat pembayaran.');
         } finally {
             if (connection) connection.release();
         }
     }
-
+    
     /**
      * Mengambil detail pembayaran berdasarkan ID pembayaran.
      * @param {number} paymentId - ID pembayaran.
