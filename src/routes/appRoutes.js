@@ -1,4 +1,3 @@
-// src/routes/appRoutes.js
 const express = require('express');
 const router = express.Router();
 const appController = require('../controllers/appController');
@@ -10,7 +9,6 @@ router.get('/', appController.getHomepage);
 router.get('/about', appController.getAboutPage);
 router.get('/contact', appController.getContactPage);
 router.get('/privacy-policy', appController.getPrivacyPolicyPage);
-router.get('/blog', appController.getBlogPage);
 router.get('/error', appController.getErrorPage);
 router.get('/terms', appController.getTermsPage);
 router.get('/faq', appController.getFaqPage);

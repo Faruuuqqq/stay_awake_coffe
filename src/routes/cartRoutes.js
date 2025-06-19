@@ -1,11 +1,10 @@
-// src/routes/cartRoutes.js
 const express = require('express');
 const router = express.Router();
 const cartController = require('../controllers/cartController');
-const { protect } = require('../middlewares/authMiddleware'); // <-- Perubahan di sini
+const { protect } = require('../middlewares/authMiddleware'); 
 
 // Semua rute di sini memerlukan otentikasi
-router.use(protect); // <-- Perubahan di sini
+router.use(protect); 
 
 // Rute untuk keranjang belanja pengguna yang sedang login
 router.get('/', cartController.getCart);

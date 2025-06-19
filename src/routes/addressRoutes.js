@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const addressController = require('../controllers/addressController');
-const { protect } = require('../middlewares/authMiddleware'); // Semua rute alamat membutuhkan autentikasi
+const { protect } = require('../middlewares/authMiddleware');
 
 // Semua rute di sini memerlukan otentikasi
 router.use(protect);

@@ -7,7 +7,6 @@ const userModel = require('../models/userModel');
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_fallback';
 
 /**
- * Middleware BARU: identifyUser
  * Tugasnya hanya mengidentifikasi user dari cookie jika ada, tanpa memblokir request.
  * Akan digunakan secara global di app.js.
  */
@@ -31,7 +30,6 @@ const identifyUser = async (req, res, next) => {
 
 
 /**
- * Middleware: protect
  * Tugasnya MEMBLOKIR akses jika user tidak login.
  * Digunakan untuk halaman spesifik seperti /profile, /checkout.
  */

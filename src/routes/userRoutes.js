@@ -1,9 +1,9 @@
 // src/routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
-const userController = require('../controllers/userController'); // Memastikan impor ini benar
-const { identifyUser, protect } = require('../middlewares/authMiddleware'); // Untuk melindungi rute
-const adminMiddleware = require('../middlewares/adminMiddleware'); // Untuk rute khusus admin
+const userController = require('../controllers/userController');
+const { identifyUser, protect } = require('../middlewares/authMiddleware');
+const adminMiddleware = require('../middlewares/adminMiddleware');
 
 // Rute Pengguna Biasa (Membutuhkan Autentikasi)
 router.get('/me', identifyUser, identifyUser, userController.getMyProfile); // Mendapatkan profil sendiri

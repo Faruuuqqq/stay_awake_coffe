@@ -10,7 +10,7 @@ router.post('/login', authController.login);            // Proses login
 router.get('/register', authController.getRegisterPage);  // Menampilkan halaman register
 router.post('/register', authController.register);      // Proses registrasi
 
-// Mengubah logout menjadi GET untuk kemudahan akses via link
 router.get('/logout', authController.logout);           // Proses logout
+router.get('/forgot-password', authController.getForgotPasswordPage);           // Proses logout
 
 module.exports = router;

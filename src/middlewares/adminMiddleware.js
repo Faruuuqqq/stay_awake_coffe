@@ -1,5 +1,4 @@
-// src/middlewares/adminMiddleware.js
-const { ApiError, UnauthorizedError, ForbiddenError } = require('../utils/ApiError'); // Mengimpor Custom Error Classes
+const { ApiError, UnauthorizedError, ForbiddenError } = require('../utils/ApiError');
 
 /**
  * Middleware untuk memverifikasi apakah pengguna yang terautentikasi adalah seorang admin.
