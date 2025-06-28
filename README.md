@@ -76,32 +76,6 @@ Kami telah mengimplementasikan fitur-fitur esensial untuk pengalaman e-commerce 
     * **Counter Animasi:** PureCounter
 * **Struktur Proyek:** Arsitektur Model-View-Controller (MVC).
 
-## Struktur Direktori Proyek
-├── src/
-│   ├── config/             # Konfigurasi database
-│   ├── controllers/        # Logika bisnis dan penanganan request
-│   ├── middlewares/        # Middleware Express (autentikasi, otorisasi, error)
-│   ├── models/             # Interaksi dengan database (query SQL)
-│   ├── routes/             # Definisi rute API dan halaman
-│   ├── public/             # File statis (CSS, JS, gambar, vendor assets)
-│   │   ├── assets/
-│   │       ├── css/
-│   │           ├── main.css
-│   │           └── custom-toast.css
-│   │       ├── js/
-│   │           └── main.js
-│   │       └── img/        # Gambar produk, kategori, dll.
-│   │       └── vendor/     # Library JS/CSS pihak ketiga
-│   ├── views/              # Template EJS untuk render halaman
-│   │   ├── partials/       # Bagian-bagian template yang dapat digunakan kembali (header, footer)
-│   │   └── (halaman .ejs)  # Contoh: products.ejs, cart.ejs, login-register.ejs
-│   ├── utils/              # Fungsi-fungsi utilitas pembantu (misalnya renderHelpers)
-│   ├── database/           # Skema database (.sql), seeder, dummy data
-│   ├── .env.example        # Contoh file variabel lingkungan
-│   ├── app.js              # Entry point aplikasi Express
-│   ├── package.json        # Dependensi proyek
-│   └── README.md           # Dokumentasi proyek
-
 ## Cara Menyiapkan dan Menjalankan Proyek
 
 ### Prasyarat
