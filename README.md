@@ -1,180 +1,135 @@
-# Stay Awake Coffee: Platform E-commerce Kopi UMKM Lokal
+# ☕ Stay Awake Coffee - Aplikasi E-Commerce
+
+Selamat datang di repositori E-Commerce Stay Awake Coffee! Ini adalah proyek aplikasi web full-stack yang dibangun dengan Node.js, Express, dan MySQL, dengan fokus pada fungsionalitas e-commerce yang lengkap, keamanan, dan pengalaman pengguna yang modern.
+
+#### Preview  
+![Stay Awake Coffee Screenshot](src\public\assets\img\preview\homepage.jpeg)
+![Stay Awake Coffee Screenshot](src\public\assets\img\preview\homepage_product.jpeg)
 
 ## Deskripsi Proyek
 
-**Stay Awake Coffee** adalah platform e-commerce yang dirancang untuk menjadi jembatan antara pelaku UMKM kopi lokal Indonesia dengan konsumen digital. Kami menyediakan berbagai produk kopi berkualitas tinggi seperti biji kopi pilihan dari berbagai daerah di Indonesia, kopi bubuk, dan merchandise eksklusif.
+Stay Awake Coffee adalah platform e-commerce fungsional yang memungkinkan pengguna untuk melakukan registrasi, login, menjelajahi berbagai produk kopi, mengelola keranjang belanja, dan menyelesaikan alur checkout yang aman. Proyek ini dibangun dengan arsitektur backend yang terstruktur (Service-Model-Controller) dan mengimplementasikan otentikasi berbasis JWT (JSON Web Token) yang disimpan dalam `HttpOnly` cookie untuk keamanan maksimal.
 
-Banyak pelaku usaha kecil di bidang kopi yang belum memiliki akses untuk menjual produknya secara online. Stay Awake Coffee hadir sebagai solusi, membantu mereka memasarkan produk secara lebih luas dengan cara yang mudah dan efisien, sekaligus mendukung perkembangan industri kopi lokal dan kesejahteraan para petaninya.
+## Fitur Utama
 
-Website ini dibangun menggunakan **Node.js, Express.js, dan MySQL**, dengan fokus pada kemudahan akses bagi pembeli dan efisiensi pengelolaan bagi admin.
+-   **Otentikasi & Keamanan**:
+    -   Registrasi, Login, dan Logout pengguna yang aman.
+    -   Penggunaan `HttpOnly` cookie untuk menyimpan token JWT, mencegah serangan XSS.
+    -   Hashing password menggunakan `Argon2`.
+    -   Middleware otentikasi (`protect`) dan otorisasi (`adminMiddleware`) untuk melindungi rute.
 
-## Fitur-Fitur Utama
+-   **Fungsionalitas E-Commerce**:
+    -   **Katalog Produk**: Menampilkan daftar produk dari database dengan gambar dan harga.
+    -   **Halaman Detail Produk**: Menampilkan detail lengkap, galeri gambar produk yang interaktif, dan pilihan kuantitas.
+    -   **Keranjang Belanja (Shopping Cart)**: Menambah, memperbarui, dan menghapus item dari keranjang menggunakan AJAX tanpa perlu me-reload halaman.
+    -   **Alur Checkout**:
+        -   Form checkout multi-langkah yang rapi.
+        -   Manajemen alamat (pilih alamat tersimpan atau buat alamat baru secara dinamis).
+        -   Kalkulasi total harga dinamis berdasarkan ongkos kirim dan pajak.
+    -   **Manajemen Pesanan**: Pengguna dapat melihat riwayat dan detail pesanan mereka.
+    -   **Pembayaran**: Alur untuk memproses dan mencatat pembayaran untuk sebuah pesanan.
 
-Kami telah mengimplementasikan fitur-fitur esensial untuk pengalaman e-commerce yang komprehensif:
+-   **Manajemen Akun Pengguna**:
+    -   Dashboard "Akun Saya" yang terstruktur dengan baik.
+    -   CRUD (Create, Read, Update, Delete) untuk alamat pengiriman.
+    -   Fungsi untuk memperbarui profil (nama, email) dan mengganti password.
 
-### Fitur Pengguna (Frontend & Backend):
+## Tumpukan Teknologi
 
-* **Autentikasi Pengguna:**
-    * **Registrasi:** Pendaftaran akun baru.
-    * **Login:** Masuk ke akun pengguna dengan JWT (JSON Web Tokens) berbasis cookie.
-    * **Logout:** Keluar dari sesi pengguna.
-* **Manajemen Akun:**
-    * **Profil Pengguna:** Melihat dan memperbarui informasi profil (nama, email).
-    * **Ganti Kata Sandi:** Memperbarui kata sandi akun.
-    * **Riwayat Pesanan:** Melihat daftar pesanan yang pernah dibuat, termasuk detail produk per pesanan.
-    * **Alamat Saya:** Menambah, melihat, mengedit, dan menghapus alamat pengiriman yang tersimpan.
-    * **Metode Pembayaran (Riwayat):** Melihat riwayat pembayaran.
-* **Katalog Produk:**
-    * Melihat daftar semua produk kopi dan merchandise.
-    * Melihat detail produk individual (deskripsi, harga, stok, gambar utama & hover, ulasan).
-    * **Rating Produk:** Menampilkan rating dummy/acak di daftar produk dan rata-rata rating di detail produk (siap untuk integrasi rating asli).
-    * **Filter & Sorting:** Struktur backend siap untuk filter berdasarkan kategori, harga, dan pencarian.
-* **Keranjang Belanja:**
-    * Menambah produk ke keranjang.
-    * Memperbarui kuantitas produk di keranjang.
-    * Menghapus produk dari keranjang.
-    * Mengosongkan seluruh keranjang.
-* **Proses Checkout:**
-    * Memilih alamat pengiriman dari daftar yang tersimpan atau menambahkan alamat baru.
-    * Ringkasan order yang dinamis dari isi keranjang.
-    * Membuat order baru yang terhubung dengan alamat terpilih.
-* **Proses Pembayaran (Simulasi):**
-    * Halaman khusus untuk konfirmasi pembayaran setelah checkout.
-    * Mencatat detail pembayaran ke database.
-    * Mengupdate status order setelah pembayaran.
-    * Halaman konfirmasi pembayaran sukses.
-* **Ulasan Produk:**
-    * Menulis ulasan (rating & komentar) untuk produk tertentu.
-    * Melihat daftar ulasan yang ada untuk suatu produk.
-* **Notifikasi Interaktif:**
-    * Sistem notifikasi **Toast kustom** yang seragam dan indah (muncul di pojok kanan bawah) untuk feedback sukses, error, info, dan warning di seluruh aplikasi.
+| Kategori      | Teknologi                                                              |
+| ------------- | ---------------------------------------------------------------------- |
+| **Backend** | Node.js, Express.js                                                      |
+| **Database** | MySQL                                                                   |
+| **Frontend** | EJS (Server-Side Rendering), JavaScript, JQuery, Bootstrap 5, SASS/CSS  |
+| **Keamanan** | JWT, HttpOnly Cookies, Argon2, CORS                                     |
+| **Lainnya** | SweetAlert2, Swiper.js, AOS.js, Joi (Validasi)                           |
+| **DevOps** | Docker, Docker Compose                                                    |
 
-### Fitur Admin (Backend Terlindungi):
+## Instalasi & Cara Menjalankan
 
-* **Manajemen Produk:** API untuk membuat, memperbarui, dan menghapus produk.
-* **Manajemen Kategori:** API untuk membuat, memperbarui, dan menghapus kategori.
-* **Manajemen Pengiriman:** API untuk membuat dan memperbarui status pengiriman.
-* **Otorisasi Role-Based:** Rute-rute admin dilindungi secara ketat menggunakan `adminMiddleware`, memastikan hanya pengguna dengan peran 'admin' yang dapat mengaksesnya.
+Metode yang paling direkomendasikan adalah menggunakan Docker, karena semua konfigurasi sudah disiapkan untuk Anda.
 
-## Teknologi yang Digunakan
+### Menggunakan Docker (Sangat Direkomendasikan)
 
-* **Backend:** Node.js, Express.js
-* **Database:** MySQL
-* **Driver Database:** `mysql2` (untuk interaksi dengan MySQL)
-* **Autentikasi:** JSON Web Tokens (JWT)
-* **Password Hashing:** `bcryptjs`
-* **Variabel Lingkungan:** `dotenv`
-* **Frontend:**
-    * **Templating Engine:** EJS
-    * **CSS Framework:** Bootstrap 5
-    * **Ikon:** Bootstrap Icons, FontAwesome 5.15.3 (untuk Toast kustom)
-    * **JavaScript:** Fetch API untuk interaksi AJAX, DOM manipulation
-    * **Animasi:** AOS (Animate On Scroll)
-    * **Slider:** Swiper.js
-    * **Layout & Filter:** Isotope.js, ImagesLoaded (untuk filter produk)
-    * **Lightbox:** GLightbox
-    * **Counter Animasi:** PureCounter
-* **Struktur Proyek:** Arsitektur Model-View-Controller (MVC).
+**Prasyarat**: Docker dan Docker Compose sudah terpasang dan berjalan.
 
-## Struktur Direktori Proyek
-├── src/
-│   ├── config/             # Konfigurasi database
-│   ├── controllers/        # Logika bisnis dan penanganan request
-│   ├── middlewares/        # Middleware Express (autentikasi, otorisasi, error)
-│   ├── models/             # Interaksi dengan database (query SQL)
-│   ├── routes/             # Definisi rute API dan halaman
-│   ├── public/             # File statis (CSS, JS, gambar, vendor assets)
-│   │   ├── assets/
-│   │       ├── css/
-│   │           ├── main.css
-│   │           └── custom-toast.css
-│   │       ├── js/
-│   │           └── main.js
-│   │       └── img/        # Gambar produk, kategori, dll.
-│   │       └── vendor/     # Library JS/CSS pihak ketiga
-│   ├── views/              # Template EJS untuk render halaman
-│   │   ├── partials/       # Bagian-bagian template yang dapat digunakan kembali (header, footer)
-│   │   └── (halaman .ejs)  # Contoh: products.ejs, cart.ejs, login-register.ejs
-│   ├── utils/              # Fungsi-fungsi utilitas pembantu (misalnya renderHelpers)
-│   ├── database/           # Skema database (.sql), seeder, dummy data
-│   ├── .env.example        # Contoh file variabel lingkungan
-│   ├── app.js              # Entry point aplikasi Express
-│   ├── package.json        # Dependensi proyek
-│   └── README.md           # Dokumentasi proyek
+1.  **Buat File `.env`**
+    Di dalam folder utama proyek (di level yang sama dengan `docker-compose.yml`), buat sebuah file baru dengan nama persis `.env` dan salin semua teks di bawah ini ke dalamnya. Ganti nilai-nilai `your_..._password` dengan password yang aman.
 
-## Cara Menyiapkan dan Menjalankan Proyek
+    ```env
+    # Konfigurasi Aplikasi Node.js
+    NODE_ENV=development
+    APP_PORT=3000
+    JWT_SECRET=kunci_rahasia_jwt_yang_sangat_aman_dan_panjang
+    JWT_EXPIRES_IN=7d
 
-### Prasyarat
+    # Koneksi Database dari Aplikasi (ini untuk komunikasi di dalam Docker)
+    DB_HOST=db
+    DB_USER=stayawake_user
+    DB_PASSWORD=your_strong_app_password
+    DB_NAME=stay_awake_db
+    DB_PORT=3306
 
-* [Node.js](https://nodejs.org/en/) (versi 14 atau lebih baru)
-* [npm](https://www.npmjs.com/) (biasanya sudah terinstal dengan Node.js)
-* [MySQL Server](https://www.mysql.com/downloads/) (versi 8.0 atau lebih baru)
-* Klien MySQL (misalnya [MySQL Workbench](https://www.mysql.com/products/workbench/), [DBeaver](https://dbeaver.io/), atau [phpMyAdmin](https://www.phpmyadmin.net/))
-
-### Langkah-langkah Setup
-
-1.  **Clone Repositori:**
-    ```bash
-    git clone [URL_REPOSITORI_ANDA]
-    cd project-uas-sistem-database-I/backend # Sesuaikan dengan jalur direktori backend Anda
-    ```
-    *(Ganti `[URL_REPOSITORI_ANDA]` dengan URL repositori Git Anda.)*
-
-2.  **Instal Dependensi:**
-    ```bash
-    npm install
+    # Konfigurasi Service Database MySQL di Docker
+    MYSQL_ROOT_PASSWORD=your_strong_root_password
+    MYSQL_DATABASE=stay_awake_db
+    MYSQL_USER=stayawake_user
+    # PASTIKAN PASSWORD INI SAMA DENGAN DB_PASSWORD DI ATAS
+    MYSQL_PASSWORD=your_strong_app_password
     ```
 
-3.  **Konfigurasi Database MySQL:**
-    * Buat database baru di MySQL server Anda, misalnya bernama `stay_awake_db`.
-    * Impor skema database:
-        ```bash
-        mysql -u [USERNAME_MYSQL] -p [NAMA_DATABASE_ANDA] < backend/database/schemaBaru.sql
-        ```
-        *(Ganti `[USERNAME_MYSQL]` dengan username MySQL Anda, `[NAMA_DATABASE_ANDA]` dengan nama database yang Anda buat.)*
-    * Impor data dummy (opsional, untuk mengisi data awal):
-        ```bash
-        mysql -u [USERNAME_MYSQL] -p [NAMA_DATABASE_ANDA] < backend/database/dummyData.sql
-        ```
-
-4.  **Konfigurasi Variabel Lingkungan:**
-    * Buat file `.env` di direktori `backend` Anda.
-    * Salin konten dari `.env.example` ke file `.env` dan sesuaikan nilainya:
-        ```
-        PORT=3000
-        DB_HOST=localhost
-        DB_USER=root
-        DB_PASSWORD=your_mysql_password
-        DB_NAME=stay_awake_db
-        JWT_SECRET=your_jwt_secret_key
-        JWT_EXPIRESIN=1h
-        NODE_ENV=development
-        ```
-        *(Ganti nilai `your_mysql_password` dan `your_jwt_secret_key` dengan milik Anda.)*
-
-5.  **Jalankan Aplikasi:**
+2.  **Build dan Jalankan Container**
+    Buka terminal di direktori utama proyek dan jalankan perintah berikut:
     ```bash
-    npm start
+    docker-compose up --build -d
     ```
-    atau
-    ```bash
-    node app.js
-    ```
-    Aplikasi akan berjalan di `http://localhost:3000` (atau port yang Anda tentukan di `.env`).
+    Perintah ini akan menjalankan aplikasi dan database di latar belakang.
+
+3.  **Setup Database **
+    - Buka aplikasi database client (DBeaver, TablePlus, MySQL Workbench).
+    - Buat koneksi baru ke database dengan detail:
+        - **Host**: `localhost` atau `127.0.0.1`
+        - **Port**: `3306`
+        - **User**: `root`
+        - **Password**: Password yang Anda atur di `MYSQL_ROOT_PASSWORD`.
+    - Setelah terhubung, jalankan dua file SQL ini secara berurutan:
+        a. Jalankan seluruh isi file `src/database/schema.sql` untuk membuat semua tabel.
+        b. Jalankan seluruh isi file `src/database/dummyData.sql` untuk mengisi tabel dengan data contoh.
+
+4.  **Akses Aplikasi**
+    Buka browser : **`http://localhost:3000`**
+
+### Menjalankan Secara Lokal (Alternatif)
+
+1.  **Setup Database**: Pastikan memiliki server MySQL yang berjalan. Buat database bernama `stay_awake_db`. Jalankan script dari `schema.sql` dan `dummyData.sql`.
+2.  **Install Dependencies**: Buka terminal di dalam folder `src` dan jalankan `npm install`.
+3.  **Konfigurasi `.env`**: Buat file `.env` di dalam folder `src`. Isi dengan `DB_HOST=localhost` serta username/password database lokal.
+4.  **Jalankan Aplikasi**: Dari dalam folder `src`, jalankan `npm run start`.
+5.  **Akses Aplikasi**: Buka browser dan kunjungi `http://localhost:3000`.
+
+## Struktur Proyek
+
+Struktur folder utama pada direktori `src` diatur sebagai berikut untuk memisahkan setiap concern:
+```
+/src
+├── config/             # Konfigurasi database (db.js)
+├── controllers/        # Menghubungkan rute dengan logika bisnis (services)
+├── database/           # File .sql untuk skema dan data awal
+├── middlewares/        # Middleware Express (otentikasi, error handling, dll)
+├── models/             # Berinteraksi langsung dengan database (query SQL)
+├── public/             # Aset statis (CSS, JS frontend, gambar)
+├── routes/             # Definisi semua rute API dan halaman
+├── services/           # Logika bisnis inti aplikasi
+├── utils/              # Fungsi-fungsi bantuan (helpers)
+├── views/              # File-file template EJS
+│   └── partials/       # Komponen EJS yang bisa digunakan kembali
+└── app.js              # Titik masuk utama aplikasi Express
+```
 
 ## Kontribusi
 
-Kami menyambut kontribusi! Jika Anda memiliki saran, perbaikan, atau ingin menambahkan fitur baru, silakan buka *issue* atau *pull request*.
+Kami menyambut kontribusi! Jika memiliki saran, perbaikan, atau ingin menambahkan fitur baru, silakan buka *issue* atau *pull request*.
 
 ## Lisensi
 
 Proyek ini dilisensikan di bawah [Lisensi MIT](https://opensource.org/licenses/MIT).
-
----
-
-**Saran Penting untuk Anda Setelah Ini:**
-
-* **Pastikan `productModel.js` dan `orderModel.js` Anda adalah versi terbaru** yang sudah kita perbaiki untuk mengambil semua detail yang dibutuhkan di frontend (item order, detail alamat/pembayaran di order).
-* **Pastikan `public/assets/img/stayAwakeImage/logo/logo juga.webp` ada** di lokasi tersebut, dan gambar-gambar produk/kategori juga ada di lokasi yang benar (`/assets/img/...`).
-
-TERIMA KASIH!

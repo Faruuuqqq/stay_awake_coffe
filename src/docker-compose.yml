@@ -1,51 +1,49 @@
 version: '3.8'
 
 services:
+  # Layanan untuk aplikasi Node.js Anda
   app:
     build:
-      context: .
-      dockerfile: dockerFile
+      context: . # Konteks build adalah folder saat ini
+      dockerfile: Dockerfile # Nama file yang benar (D besar)
     ports:
-      - "3000:3000"
+      - "${APP_PORT}:3000" # Memetakan port dari .env ke port container
     volumes:
-      - .:/app
-      - /app/node_modules
+      - ./src:/app # Sinkronisasi folder src Anda dengan /app di container
+      - /app/node_modules # Mencegah folder node_modules lokal menimpa yang di container
     environment:
-      - NODE_ENV=development
-      - JWT_SECRET=your_jwt_secret_key
-      - JWT_EXPIRESIN=7d
-      - DB_HOST=db
-      - DB_USER=stayawake_user 
-      - DB_PASSWORD=your_app_password
-      - DB_NAME=stay_awake_db
+      # Semua variabel environment sekarang dibaca dari file .env
+      - NODE_ENV=${NODE_ENV}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
     depends_on:
-      - db
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      db:
+        condition: service_healthy # Aplikasi baru akan dimulai jika database sudah sehat
 
-
+  # Layanan untuk database MySQL
   db:
-    image: mysql:8.4.2
+    image: mysql:8.4
     ports:
-      - "3306:3306"
+      - "${DB_PORT}:3306" # Memetakan port dari .env ke port container
     environment:
-      - MYSQL_ROOT_PASSWORD=your_root_password_for_docker # FIX: Password untuk root di DALAM Docker
-      - MYSQL_DATABASE=stay_awake_db
-      - MYSQL_USER=stayawake_user # FIX: User aplikasi yang akan dibuat oleh MySQL Entrypoint
-      - MYSQL_PASSWORD=your_app_password # FIX: Password untuk user aplikasi ini
+      # Variabel untuk setup database MySQL, dibaca dari .env
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD} # Password ini sekarang sinkron dengan layanan app
     volumes:
-      - db_data:/var/lib/mysql
-      - ./backend/database/schemaBaru.sql:/docker-entrypoint-initdb.d/1.sql
-      - ./backend/database/dummyData.sql:/docker-entrypoint-initdb.d/2.sql
-
+      - db_data:/var/lib/mysql # Menyimpan data database secara persisten
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      # Pengecekan untuk memastikan database siap menerima koneksi
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "${MYSQL_USER}", "-p${MYSQL_PASSWORD}"]
       interval: 10s
+      timeout: 5s
+      retries: 5
 
+# Definisi volume untuk persistensi data database
 volumes:
-  db_data: {}
+  db_data:
